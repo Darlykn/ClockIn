@@ -1,0 +1,64 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Убираем рамку фокуса и выделение области на графиках Recharts */
+.recharts-responsive-container,
+.recharts-responsive-container *,
+.recharts-wrapper,
+.recharts-wrapper * {
+  outline: none !important;
+}
+.recharts-responsive-container:focus,
+.recharts-responsive-container *:focus,
+.recharts-responsive-container *:focus-visible,
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible {
+  outline: none !important;
+}
+.recharts-responsive-container,
+.recharts-wrapper {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Убираем outline: auto у SVG с role="application" (recharts SVG при клике) */
+svg[role="application"],
+svg[role="application"]:focus,
+svg[role="application"]:focus-visible,
+svg[tabindex]:focus,
+svg[tabindex]:focus-visible {
+  outline: none !important;
+  outline-style: none !important;
+}
+
+/* Убираем outline у всех SVG элементов внутри recharts */
+.recharts-wrapper svg *,
+.recharts-wrapper svg *:focus,
+.recharts-wrapper svg *:focus-visible {
+  outline: 0 !important;
+  outline-style: none !important;
+}
+
+.chart-no-selection,
+.chart-no-selection * {
+  outline: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.chart-no-selection:focus,
+.chart-no-selection *:focus,
+.chart-no-selection *:focus-visible {
+  outline: none !important;
+  outline-style: none !important;
+}
