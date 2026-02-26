@@ -17,6 +17,7 @@ class AttendanceSummary(BaseModel):
 class DailyStatus(BaseModel):
     date: date
     status: Literal["normal", "late", "absent", "weekend"]
+    first_entry: time | None = None
 
 
 class HeatmapCell(BaseModel):

@@ -26,6 +26,13 @@ export const statsApi = {
       })
       .then((r) => r.data),
 
+  getCalendarRange: (employee_id: string | undefined, date_from: string, date_to: string) =>
+    api
+      .get<DailyStatus[]>('/stats/calendar-range', {
+        params: { employee_id, date_from, date_to },
+      })
+      .then((r) => r.data),
+
   getTrend: (params: StatsParams & { months?: number }) =>
     api.get<TrendPoint[]>('/stats/trend', { params }).then((r) => r.data),
 

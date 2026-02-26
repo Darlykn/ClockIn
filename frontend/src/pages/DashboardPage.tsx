@@ -30,6 +30,7 @@ import { TrendChart } from '../components/Charts/TrendChart';
 import { HeatmapChart } from '../components/Charts/HeatmapChart';
 import { TopLateChart } from '../components/Charts/TopLateChart';
 import { CheckpointChart } from '../components/Charts/CheckpointChart';
+import { YearCalendar } from '../components/Calendar/YearCalendar';
 import type { StatsParams } from '../api/stats';
 
 interface StatsCardProps {
@@ -241,6 +242,8 @@ export function DashboardPage() {
           <CheckpointChart params={params} />
         </Grid.Col>
       </Grid>
+
+      <YearCalendar />
     </Stack>
   );
 }

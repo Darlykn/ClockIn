@@ -21,6 +21,18 @@ export function useCalendar(
   });
 }
 
+export function useCalendarRange(
+  employeeId: string | undefined,
+  dateFrom: string,
+  dateTo: string
+) {
+  return useQuery({
+    queryKey: ['stats', 'calendar-range', employeeId, dateFrom, dateTo],
+    queryFn: () => statsApi.getCalendarRange(employeeId, dateFrom, dateTo),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useTrend(params: StatsParams & { months?: number }) {
   return useQuery({
     queryKey: ['stats', 'trend', params],

@@ -217,13 +217,78 @@ async def get_calendar(
             statuses.append(DailyStatus(date=cur, status="weekend"))
         elif cur in rows:
             arrival = rows[cur]
-            if arrival <= time(9, 0, 0):
-                statuses.append(DailyStatus(date=cur, status="normal"))
-            elif arrival <= late_threshold:
-                statuses.append(DailyStatus(date=cur, status="normal"))
+            if arrival <= late_threshold:
+                statuses.append(DailyStatus(date=cur, status="normal", first_entry=arrival))
             else:
-                statuses.append(DailyStatus(date=cur, status="late"))
+                statuses.append(DailyStatus(date=cur, status="late", first_entry=arrival))
         elif cur <= today:
+            statuses.append(DailyStatus(date=cur, status="absent"))
+        cur += timedelta(days=1)
+
+    return statuses
+
+
+@router.get(
+    "/calendar-range",
+    response_model=list[DailyStatus],
+    summary="Daily status for a date range (Year Calendar View)",
+)
+async def get_calendar_range(
+    employee_id: uuid.UUID | None = Query(default=None),
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[DailyStatus]:
+    today = date.today()
+    df = _parse_date(date_from, today - timedelta(days=365))
+    dt = _parse_date(date_to, today)
+    eid = _resolve_employee_id(employee_id, current_user) or current_user.id
+
+    dt_from = datetime(df.year, df.month, df.day, tzinfo=timezone.utc)
+    dt_to = datetime(dt.year, dt.month, dt.day, 23, 59, 59, tzinfo=timezone.utc)
+
+    query = text(
+        """
+        SELECT
+            DATE(event_time AT TIME ZONE 'UTC') AS day,
+            MIN(event_time AT TIME ZONE 'UTC')  AS first_entry
+        FROM attendance_logs
+        WHERE employee_id = :eid
+          AND event_type = 'entry'
+          AND event_time BETWEEN :dt_from AND :dt_to
+        GROUP BY DATE(event_time AT TIME ZONE 'UTC')
+        """
+    )
+    result = await db.execute(query, {"eid": str(eid), "dt_from": dt_from, "dt_to": dt_to})
+    rows = {r["day"]: r["first_entry"].time() for r in result.mappings().all()}
+
+    # Warm holiday cache for all months in range
+    cur_month = date(df.year, df.month, 1)
+    end_month = date(dt.year, dt.month, 1)
+    while cur_month <= end_month:
+        await warm_cache_for_month(cur_month.year, cur_month.month)
+        if cur_month.month == 12:
+            cur_month = date(cur_month.year + 1, 1, 1)
+        else:
+            cur_month = date(cur_month.year, cur_month.month + 1, 1)
+
+    late_threshold = time(9, settings.LATE_YELLOW_MINUTES, 0)
+    statuses: list[DailyStatus] = []
+    cur = df
+
+    while cur <= min(dt, today):
+        if cur.weekday() >= 5:
+            statuses.append(DailyStatus(date=cur, status="weekend"))
+        elif is_holiday(cur) and cur not in rows:
+            statuses.append(DailyStatus(date=cur, status="weekend"))
+        elif cur in rows:
+            arrival = rows[cur]
+            if arrival <= late_threshold:
+                statuses.append(DailyStatus(date=cur, status="normal", first_entry=arrival))
+            else:
+                statuses.append(DailyStatus(date=cur, status="late", first_entry=arrival))
+        else:
             statuses.append(DailyStatus(date=cur, status="absent"))
         cur += timedelta(days=1)
 
