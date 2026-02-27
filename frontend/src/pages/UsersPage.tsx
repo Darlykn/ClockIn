@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type CSSProperties } from 'react';
 import {
   Stack,
   Title,
@@ -54,7 +54,7 @@ type SortField = 'full_name' | 'username' | 'email' | 'role' | 'has_2fa' | 'is_a
 type SortDir = 'asc' | 'desc';
 
 const ROLE_COLORS: Record<UserRole, string> = {
-  admin: 'red',
+  admin: 'brand',
   manager: 'blue',
   employee: 'gray',
 };
@@ -159,7 +159,7 @@ function AttendancePanel({ user }: AttendancePanelProps) {
   };
 
   return (
-    <Box p="md" style={{ background: 'var(--mantine-color-default-hover)' }}>
+    <Box p="md" style={{ background: 'var(--bg-sidebar)' }}>
       {/* Period selector + export */}
       <Group align="flex-end" gap="sm" wrap="wrap" mb="md">
         <DatePickerInput
@@ -194,8 +194,20 @@ function AttendancePanel({ user }: AttendancePanelProps) {
           Нет данных за выбранный период
         </Text>
       ) : (
-        <Paper withBorder radius="sm" style={{ overflow: 'hidden' }}>
-          <Table striped highlightOnHover>
+        <Paper
+          withBorder
+          radius="sm"
+          style={{ overflow: 'hidden', borderColor: 'var(--border-subtle)' }}
+        >
+          <Table
+            highlightOnHover
+            style={
+              {
+                '--table-highlight-on-hover-color': 'var(--bg-sidebar)',
+                '--table-border-color': 'var(--border-subtle)',
+              } as CSSProperties
+            }
+          >
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Дата</Table.Th>
@@ -388,7 +400,7 @@ export function UsersPage() {
 
   if (isError)
     return (
-      <Alert icon={<IconAlertCircle size={16} />} color="red">
+      <Alert icon={<IconAlertCircle size={16} />} color="brand" variant="light">
         Ошибка загрузки пользователей
       </Alert>
     );
@@ -397,7 +409,7 @@ export function UsersPage() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>Сотрудники</Title>
-        <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
+        <Button leftSection={<IconPlus size={16} />} onClick={openCreate} color="brand">
           Добавить пользователя
         </Button>
       </Group>
@@ -446,8 +458,25 @@ export function UsersPage() {
         />
       </Group>
 
-      <Paper withBorder radius="md" style={{ overflow: 'hidden' }}>
-        <Table striped highlightOnHover>
+      <Paper
+        withBorder
+        radius="md"
+        style={{
+          overflow: 'hidden',
+          borderColor: 'var(--border-subtle)',
+          backgroundColor: 'var(--bg-card)',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        }}
+      >
+        <Table
+          highlightOnHover
+          style={
+            {
+              '--table-highlight-on-hover-color': 'var(--bg-sidebar)',
+              '--table-border-color': 'var(--border-subtle)',
+            } as CSSProperties
+          }
+        >
           <Table.Thead>
             <Table.Tr>
               <Table.Th style={{ width: 28 }} />
@@ -666,14 +695,14 @@ function UserRows({
           </Badge>
         </Table.Td>
         <Table.Td>
-          <Badge color={u.is_active ? 'green' : 'red'} size="sm">
+          <Badge color={u.is_active ? 'green' : 'brand'} size="sm" variant="light">
             {u.is_active ? 'Активен' : 'Заблокирован'}
           </Badge>
         </Table.Td>
         <Table.Td onClick={(e) => e.stopPropagation()}>
           <Group gap="xs">
             <Tooltip label="Изменить">
-              <ActionIcon variant="subtle" size="sm" onClick={onEdit}>
+              <ActionIcon variant="subtle" size="sm" color="gray" onClick={onEdit}>
                 <IconEdit size={14} />
               </ActionIcon>
             </Tooltip>
@@ -687,7 +716,7 @@ function UserRows({
                 <ActionIcon
                   variant="subtle"
                   size="sm"
-                  color={u.is_active ? 'red' : 'green'}
+                  color={u.is_active ? 'brand' : 'green'}
                   onClick={onToggleActive}
                 >
                   {u.is_active ? <IconUserOff size={14} /> : <IconUserCheck size={14} />}

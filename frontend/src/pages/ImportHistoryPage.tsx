@@ -41,10 +41,10 @@ const STATUS_LABELS = {
 
 function StatusIcon({ status }: { status: ImportHistory['status'] }) {
   if (status === 'success')
-    return <IconCheck size={16} color="var(--mantine-color-green-6)" />;
+    return <IconCheck size={16} color="var(--success-500)" />;
   if (status === 'partial')
-    return <IconAlertCircle size={16} color="var(--mantine-color-yellow-6)" />;
-  return <IconX size={16} color="var(--mantine-color-red-6)" />;
+    return <IconAlertCircle size={16} color="var(--warning-500)" />;
+  return <IconX size={16} color="var(--error-500)" />;
 }
 
 function MiniStat({
@@ -211,7 +211,7 @@ export function ImportHistoryPage() {
   if (isLoading) return <Skeleton height={400} />;
   if (isError)
     return (
-      <Alert icon={<IconAlertCircle size={16} />} color="red">
+      <Alert icon={<IconAlertCircle size={16} />} color="brand" variant="light">
         Ошибка загрузки истории
       </Alert>
     );
@@ -221,11 +221,26 @@ export function ImportHistoryPage() {
       <Title order={2}>История загрузок</Title>
 
       {!data || data.length === 0 ? (
-        <Paper p="xl" withBorder ta="center" radius="md">
+        <Paper
+          p="xl"
+          withBorder
+          ta="center"
+          radius="md"
+          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+        >
           <Text c="dimmed">Файлы ещё не загружались</Text>
         </Paper>
       ) : (
-        <Paper withBorder radius="md" style={{ overflow: 'hidden' }}>
+        <Paper
+          withBorder
+          radius="md"
+          style={{
+            overflow: 'hidden',
+            borderColor: 'var(--border-subtle)',
+            backgroundColor: 'var(--bg-card)',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
           <Accordion chevronPosition="right" variant="separated" multiple>
             {data.map((item) => (
               <HistoryAccordionItem key={item.id} item={item} />

@@ -55,8 +55,8 @@ export function FirstLoginPage() {
 
   if (!inviteToken) {
     return (
-      <Center h="100vh">
-        <Alert icon={<IconAlertCircle size={16} />} color="red" title="Неверная ссылка">
+      <Center h="100vh" style={{ background: 'var(--bg-page)' }}>
+        <Alert icon={<IconAlertCircle size={16} />} color="brand" variant="light" title="Неверная ссылка">
           Ссылка для первого входа недействительна или устарела.
         </Alert>
       </Center>
@@ -125,14 +125,20 @@ export function FirstLoginPage() {
   };
 
   return (
-    <Center h="100vh" style={{ background: 'var(--mantine-color-body)' }}>
+    <Center h="100vh" style={{ background: 'var(--bg-page)' }}>
       <Box w={420} pos="relative">
         <LoadingOverlay visible={loading} />
 
-        <Paper p="xl" radius="lg" withBorder shadow="md">
+        <Paper
+          p="xl"
+          radius="lg"
+          withBorder
+          shadow="md"
+          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+        >
           <Stack gap="lg">
             <Stack gap={4} align="center">
-              <Title order={2} fw={700}>
+              <Title order={2} fw={700} style={{ color: 'var(--primary-500)' }}>
                 AttendTrack
               </Title>
               <Text c="dimmed" size="sm">
@@ -141,7 +147,7 @@ export function FirstLoginPage() {
             </Stack>
 
             {error && (
-              <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
+              <Alert icon={<IconAlertCircle size={16} />} color="brand" variant="light">
                 {error}
               </Alert>
             )}
@@ -165,7 +171,7 @@ export function FirstLoginPage() {
                     placeholder="••••••••"
                     {...form.getInputProps('password_confirm')}
                   />
-                  <Button type="submit" fullWidth size="md">
+                  <Button type="submit" fullWidth size="md" color="brand">
                     Продолжить
                   </Button>
                 </Stack>
@@ -199,6 +205,7 @@ export function FirstLoginPage() {
                 <Button
                   fullWidth
                   size="md"
+                  color="brand"
                   onClick={handleVerify}
                   disabled={otpCode.length !== 6}
                   leftSection={<IconKey size={16} />}

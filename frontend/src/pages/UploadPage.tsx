@@ -89,7 +89,12 @@ export function UploadPage() {
     <Stack gap="lg">
       <Title order={2}>Загрузка Excel-файла</Title>
 
-      <Paper p="xl" withBorder radius="md">
+      <Paper
+        p="xl"
+        withBorder
+        radius="md"
+        style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+      >
         <Dropzone
           openRef={openRef}
           onDrop={handleDrop}
@@ -103,10 +108,10 @@ export function UploadPage() {
         >
           <Group justify="center" gap="xl" mih={160} style={{ pointerEvents: 'none' }}>
             <Dropzone.Accept>
-              <IconUpload size={52} color="var(--mantine-color-blue-6)" />
+              <IconUpload size={52} color="var(--primary-500)" />
             </Dropzone.Accept>
             <Dropzone.Reject>
-              <IconX size={52} color="var(--mantine-color-red-6)" />
+              <IconX size={52} color="var(--error-500)" />
             </Dropzone.Reject>
             <Dropzone.Idle>
               <IconFile size={52} color="var(--mantine-color-dimmed)" />
@@ -121,6 +126,7 @@ export function UploadPage() {
               </Text>
               <Button
                 variant="light"
+                color="gray"
                 size="sm"
                 mt="sm"
                 style={{ pointerEvents: 'all' }}
@@ -138,17 +144,22 @@ export function UploadPage() {
       </Paper>
 
       {result && (
-        <Paper p="md" withBorder radius="md">
+        <Paper
+          p="md"
+          withBorder
+          radius="md"
+          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+        >
           <Stack gap="md">
             {/* Header */}
             <Group gap="sm" justify="space-between">
               <Group gap="sm">
                 {result.status === 'success' ? (
-                  <IconCheck size={20} color="var(--mantine-color-green-6)" />
+                  <IconCheck size={20} color="var(--success-500)" />
                 ) : result.status === 'partial' ? (
-                  <IconAlertCircle size={20} color="var(--mantine-color-yellow-6)" />
+                  <IconAlertCircle size={20} color="var(--warning-500)" />
                 ) : (
-                  <IconX size={20} color="var(--mantine-color-red-6)" />
+                  <IconX size={20} color="var(--error-500)" />
                 )}
                 <Text fw={600} size="sm" c="dimmed" ff="monospace">
                   {result.filename}
@@ -245,7 +256,8 @@ export function UploadPage() {
       {uploadMutation.isError && !result && (
         <Alert
           icon={<IconAlertCircle size={16} />}
-          color="red"
+          color="brand"
+          variant="light"
           title="Ошибка"
         >
           Не удалось обработать файл. Проверьте формат (только .xlsx/.xls).

@@ -37,7 +37,12 @@ export function CalendarPage() {
     <Stack gap="lg">
       <Title order={2}>Календарь посещаемости</Title>
 
-      <Paper p="md" withBorder radius="md">
+      <Paper
+        p="md"
+        withBorder
+        radius="md"
+        style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+      >
         <Group gap="md" wrap="wrap">
           {isAdmin && (
             <Select

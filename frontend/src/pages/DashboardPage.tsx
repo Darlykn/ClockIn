@@ -44,15 +44,24 @@ interface StatsCardProps {
 function StatsCard({ title, value, icon: Icon, color, loading }: StatsCardProps) {
   if (loading) return <Skeleton height={100} radius="md" />;
   return (
-    <Paper p="md" withBorder radius="md">
-      <Group justify="space-between" align="flex-start">
+    <Paper
+      p="md"
+      withBorder
+      radius="md"
+      style={{
+        borderColor: 'var(--border-subtle)',
+        backgroundColor: 'var(--bg-card)',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+      }}
+    >
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
         <Stack gap={4}>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
+          <Text size="xs" c="dimmed" tt="uppercase" fw={600} lts={0.5}>
             {title}
           </Text>
-          <Title order={3}>{value}</Title>
+          <Title order={3} style={{ color: 'var(--text-primary)' }}>{value}</Title>
         </Stack>
-        <ThemeIcon size="lg" variant="light" color={color} radius="md">
+        <ThemeIcon size="lg" variant="light" color={color} radius="md" style={{ flexShrink: 0 }}>
           <Icon size={20} />
         </ThemeIcon>
       </Group>
@@ -112,12 +121,17 @@ export function DashboardPage() {
     <Stack gap="lg">
       <Group justify="space-between" align="flex-end">
         <Title order={2}>Статистика</Title>
-        <Badge variant="light" size="lg">
+        <Badge variant="light" color="gray" size="lg">
           {dateFrom ? dayjs(dateFrom).format('MMM YYYY') : '—'}
         </Badge>
       </Group>
 
-      <Paper p="md" withBorder radius="md">
+      <Paper
+        p="md"
+        withBorder
+        radius="md"
+        style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+      >
         <Group gap="md" wrap="wrap">
           {isAdmin && (
             <Select
@@ -163,13 +177,19 @@ export function DashboardPage() {
       </Paper>
 
       {isError && (
-        <Alert color="red" icon={<IconAlertTriangle size={16} />}>
+        <Alert color="brand" icon={<IconAlertTriangle size={16} />} variant="light">
           Ошибка загрузки данных. Проверьте подключение к серверу.
         </Alert>
       )}
 
       {!isError && !isLoading && !summary && (
-        <Paper p="xl" withBorder ta="center" radius="md">
+        <Paper
+          p="xl"
+          withBorder
+          ta="center"
+          radius="md"
+          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+        >
           <Stack align="center" gap="sm">
             <IconUsers size={48} opacity={0.3} />
             <Text c="dimmed" fw={500}>
