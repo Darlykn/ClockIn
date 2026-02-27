@@ -82,7 +82,7 @@ export function CheckpointChart({ params }: CheckpointChartProps) {
             nameKey="shortName"
             cx="50%"
             cy="50%"
-            outerRadius={100}
+            outerRadius={115}
           >
             {chartData.map((_, index) => (
               <Cell key={index} fill={COLORS[index % COLORS.length]} />

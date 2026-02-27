@@ -187,5 +187,11 @@ async def generate_invite(
             detail="Cannot invite a disabled user",
         )
 
-    token = create_invite_token({"sub": str(user.id)})
+    # Reset 2FA so user must set it up again via the invite link
+    user.totp_secret = None
+
+    token, jti = create_invite_token({"sub": str(user.id)})
+    user.invite_jti = jti
+    await db.commit()
+
     return InviteTokenResponse(invite_token=token)

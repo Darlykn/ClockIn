@@ -66,11 +66,11 @@ interface TooltipContent {
 
 export function YearCalendar() {
   const { user } = useAuth();
-  const { data: employees } = useEmployees();
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+  const { data: employees } = useEmployees(isAdmin);
 
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(
-    isAdmin ? null : String(user?.employee_id ?? '')
+    isAdmin ? null : (user?.id ?? null)
   );
   const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null);

@@ -38,13 +38,21 @@ export const authApi = {
       .post('/auth/reset-password', { username, otp_code, new_password })
       .then((r) => r.data),
 
-  firstLogin: (invite_token: string, email: string, password: string, password_confirm: string) =>
+  firstLogin: (invite_token: string, password: string, password_confirm: string, email?: string) =>
     api
       .post<LoginResponse>('/auth/first-login', {
         invite_token,
-        email,
+        ...(email ? { email } : {}),
         password,
         password_confirm,
       })
+      .then((r) => r.data),
+
+  validateInvite: (token: string) =>
+    api
+      .get<{ valid: boolean; has_email: boolean; email?: string; full_name?: string }>(
+        '/auth/validate-invite',
+        { params: { token } }
+      )
       .then((r) => r.data),
 };

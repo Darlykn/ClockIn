@@ -509,27 +509,44 @@ async def get_top_late(
     summary="Checkpoint traffic distribution (Pie/Bar Chart)",
 )
 async def get_checkpoints(
+    employee_id: uuid.UUID | None = Query(default=None),
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_role("admin", "manager")),
+    current_user: User = Depends(get_current_user),
 ) -> list[CheckpointLoad]:
     df = _parse_date(date_from, date.today() - timedelta(days=30))
     dt = _parse_date(date_to, date.today())
+    eid = _resolve_employee_id(employee_id, current_user)
 
     dt_from = datetime(df.year, df.month, df.day, tzinfo=timezone.utc)
     dt_to = datetime(dt.year, dt.month, dt.day, 23, 59, 59, tzinfo=timezone.utc)
 
-    query = text(
-        """
-        SELECT checkpoint, COUNT(*)::int AS count
-        FROM attendance_logs
-        WHERE event_time BETWEEN :dt_from AND :dt_to
-        GROUP BY checkpoint
-        ORDER BY count DESC
-        """
-    )
-    result = await db.execute(query, {"dt_from": dt_from, "dt_to": dt_to})
+    if eid is None:
+        query = text(
+            """
+            SELECT checkpoint, COUNT(*)::int AS count
+            FROM attendance_logs
+            WHERE event_time BETWEEN :dt_from AND :dt_to
+            GROUP BY checkpoint
+            ORDER BY count DESC
+            """
+        )
+        result = await db.execute(query, {"dt_from": dt_from, "dt_to": dt_to})
+    else:
+        query = text(
+            """
+            SELECT checkpoint, COUNT(*)::int AS count
+            FROM attendance_logs
+            WHERE employee_id = :eid
+              AND event_time BETWEEN :dt_from AND :dt_to
+            GROUP BY checkpoint
+            ORDER BY count DESC
+            """
+        )
+        result = await db.execute(
+            query, {"eid": str(eid), "dt_from": dt_from, "dt_to": dt_to}
+        )
     return [
         CheckpointLoad(checkpoint=r["checkpoint"], count=r["count"])
         for r in result.mappings().all()
@@ -546,8 +563,15 @@ async def get_employee_logs(
     date_from: str | None = Query(default=None, description="ISO date YYYY-MM-DD"),
     date_to: str | None = Query(default=None, description="ISO date YYYY-MM-DD"),
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_role("admin", "manager")),
+    current_user: User = Depends(get_current_user),
 ) -> list[AttendanceLogEntry]:
+    # Employees can only access their own logs
+    if current_user.role not in ("admin", "manager") and employee_id != current_user.id:
+        from fastapi import HTTPException, status as http_status
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
     today = date.today()
     df = _parse_date(date_from, today.replace(day=1))
     dt = _parse_date(date_to, today)

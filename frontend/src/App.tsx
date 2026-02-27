@@ -49,7 +49,7 @@ function AppRoutes() {
       <Route
         path="/history"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+          <ProtectedRoute allowedRoles={['admin']}>
             <AppLayout>
               <ImportHistoryPage />
             </AppLayout>

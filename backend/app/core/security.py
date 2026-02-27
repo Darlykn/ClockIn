@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -40,12 +41,17 @@ def create_temp_token(data: dict, expires_minutes: int = 10) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def create_invite_token(data: dict, expires_days: int = 7) -> str:
-    """Invite token for first-login link, valid 7 days by default."""
+def create_invite_token(data: dict, expires_minutes: int = 10) -> tuple[str, str]:
+    """Invite token for first-login link, valid 10 minutes by default.
+
+    Returns (token, jti) so the caller can persist the jti.
+    """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(days=expires_days)
-    to_encode.update({"exp": expire, "type": "invite"})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    jti = uuid.uuid4().hex
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
+    to_encode.update({"exp": expire, "type": "invite", "jti": jti})
+    token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return token, jti
 
 
 def decode_token(token: str) -> dict:

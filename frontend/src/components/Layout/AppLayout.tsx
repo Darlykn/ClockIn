@@ -58,7 +58,7 @@ const NAV_ITEMS = [
     path: '/history',
     label: 'История загрузок',
     icon: IconHistory,
-    roles: ['admin', 'manager'],
+    roles: ['admin'],
   },
 ];
 
@@ -119,19 +119,6 @@ export function AppLayout({ children }: AppLayoutProps) {
             <Text fw={700} size="lg" style={{ color: 'var(--primary-500)', whiteSpace: 'nowrap' }}>
               {collapsed ? 'A' : 'AttendTrack'}
             </Text>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="md"
-              visibleFrom="sm"
-              onClick={() => setCollapsed((c) => !c)}
-            >
-              {collapsed ? (
-                <IconLayoutSidebarLeftExpand size={16} />
-              ) : (
-                <IconLayoutSidebarLeftCollapse size={16} />
-              )}
-            </ActionIcon>
           </Group>
 
           <Group gap="sm">
@@ -259,6 +246,28 @@ export function AppLayout({ children }: AppLayoutProps) {
               </Box>
             );
           })}
+        </AppShell.Section>
+
+        <AppShell.Section
+          visibleFrom="sm"
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            padding: collapsed ? '8px 4px' : '8px',
+          }}
+        >
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="md"
+            onClick={() => setCollapsed((c) => !c)}
+          >
+            {collapsed ? (
+              <IconLayoutSidebarLeftExpand size={16} />
+            ) : (
+              <IconLayoutSidebarLeftCollapse size={16} />
+            )}
+          </ActionIcon>
         </AppShell.Section>
       </AppShell.Navbar>
 
