@@ -1,4 +1,4 @@
-# AttendTrack
+# ClockIn
 
 Система учёта посещаемости сотрудников на основе данных СКУД (система контроля и управления доступом).
 Загрузка Excel-отчётов из турникетов, автоматическое сопоставление сотрудников, статистика опозданий, переработок и пропусков.
@@ -33,8 +33,8 @@
 ### 1. Клонировать и настроить
 
 ```bash
-git clone https://github.com/Darlykn/AttendTrack
-cd AttendTrack
+git clone https://github.com/Darlykn/ClockIn
+cd ClockIn
 cp .env.example .env   # Windows: Copy-Item .env.example .env
 ```
 
@@ -207,7 +207,7 @@ docker compose down -v     # удалить все данные
 ## Структура проекта
 
 ```
-AttendTrack/
+ClockIn/
 ├── .env.example                # Пример конфигурации
 ├── docker-compose.yml          # Оркестрация контейнеров
 │
