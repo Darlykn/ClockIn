@@ -21,8 +21,7 @@ export function useUploadFile() {
           color: 'yellow',
         });
       }
-      queryClient.invalidateQueries({ queryKey: ['files', 'history'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ refetchType: 'all' });
     },
     onError: () => {
       notifications.show({

@@ -103,7 +103,10 @@ async def list_employees(
     _current_user: User = Depends(require_role("admin", "manager")),
 ) -> list[dict]:
     result = await db.execute(
-        select(User).where(User.is_active == True).order_by(User.full_name)  # noqa: E712
+        select(User).where(
+            User.is_active == True,  # noqa: E712
+            ~User.full_name.ilike("%Временный пропуск%"),
+        ).order_by(User.full_name)
     )
     users = result.scalars().all()
     return [{"id": str(u.id), "full_name": u.full_name or u.username} for u in users]
@@ -187,5 +190,11 @@ async def generate_invite(
             detail="Cannot invite a disabled user",
         )
 
-    token = create_invite_token({"sub": str(user.id)})
+    # Reset 2FA so user must set it up again via the invite link
+    user.totp_secret = None
+
+    token, jti = create_invite_token({"sub": str(user.id)})
+    user.invite_jti = jti
+    await db.commit()
+
     return InviteTokenResponse(invite_token=token)

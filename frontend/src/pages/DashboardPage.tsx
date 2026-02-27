@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Grid,
+  Box,
   Paper,
   Stack,
   Text,
@@ -30,6 +30,7 @@ import { TrendChart } from '../components/Charts/TrendChart';
 import { HeatmapChart } from '../components/Charts/HeatmapChart';
 import { TopLateChart } from '../components/Charts/TopLateChart';
 import { CheckpointChart } from '../components/Charts/CheckpointChart';
+import { WorkHoursChart } from '../components/Charts/WorkHoursChart';
 import { YearCalendar } from '../components/Calendar/YearCalendar';
 import type { StatsParams } from '../api/stats';
 
@@ -42,28 +43,31 @@ interface StatsCardProps {
 }
 
 function StatsCard({ title, value, icon: Icon, color, loading }: StatsCardProps) {
-  if (loading) return <Skeleton height={100} radius="md" />;
+  if (loading) return <Skeleton height={90} radius="md" />;
   return (
     <Paper
-      p="md"
+      p="sm"
       withBorder
       radius="md"
       style={{
         borderColor: 'var(--border-subtle)',
         backgroundColor: 'var(--bg-card)',
         boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        minWidth: 0,
       }}
     >
-      <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <Stack gap={4}>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={600} lts={0.5}>
+      <Group gap="sm" wrap="nowrap" align="center">
+        <ThemeIcon size="lg" variant="light" color={color} radius="md" style={{ flexShrink: 0 }}>
+          <Icon size={18} />
+        </ThemeIcon>
+        <Stack gap={2} style={{ minWidth: 0, overflow: 'hidden' }}>
+          <Text size="xs" c="dimmed" fw={500} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {title}
           </Text>
-          <Title order={3} style={{ color: 'var(--text-primary)' }}>{value}</Title>
+          <Text fw={700} size="lg" style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+            {value}
+          </Text>
         </Stack>
-        <ThemeIcon size="lg" variant="light" color={color} radius="md" style={{ flexShrink: 0 }}>
-          <Icon size={20} />
-        </ThemeIcon>
       </Group>
     </Paper>
   );
@@ -71,13 +75,13 @@ function StatsCard({ title, value, icon: Icon, color, loading }: StatsCardProps)
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const { data: employees } = useEmployees();
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+  const { data: employees } = useEmployees(isAdmin);
 
   const STORAGE_KEY = 'AttendTrack-dashboard-period';
 
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(
-    isAdmin ? null : String(user?.employee_id ?? '')
+    isAdmin ? null : (user?.id ?? null)
   );
   const [dateFrom, setDateFrom] = useState<string>(() => {
     try {
@@ -199,7 +203,7 @@ export function DashboardPage() {
         </Paper>
       )}
 
-      <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 6 }} spacing="md">
+      <SimpleGrid cols={{ base: 2, sm: 3, xl: 6 }} spacing="md">
         <StatsCard
           title="Посещаемость"
           value={summary ? `${summary.attendance_pct.toFixed(1)}%` : '—'}
@@ -208,14 +212,14 @@ export function DashboardPage() {
           loading={isLoading}
         />
         <StatsCard
-          title="Средний приход"
+          title="Приход"
           value={summary?.avg_arrival_time ?? '—'}
           icon={IconClock}
           color="green"
           loading={isLoading}
         />
         <StatsCard
-          title="Средний уход"
+          title="Уход"
           value={summary?.avg_departure_time ?? '—'}
           icon={IconClockHour4}
           color="cyan"
@@ -236,7 +240,7 @@ export function DashboardPage() {
           loading={isLoading}
         />
         <StatsCard
-          title="Ср. продолжительность"
+          title="Ср. Рабочий день"
           value={
             summary?.avg_duration_hours != null
               ? `${summary.avg_duration_hours.toFixed(1)} ч`
@@ -248,20 +252,22 @@ export function DashboardPage() {
         />
       </SimpleGrid>
 
-      <Grid>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <TrendChart params={params} />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <HeatmapChart params={params} />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }} style={{ display: 'flex', flexDirection: 'column' }}>
-          <TopLateChart params={params} />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }} style={{ display: 'flex', flexDirection: 'column' }}>
+      <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="lg">
+        <TrendChart params={params} />
+        <HeatmapChart params={params} />
+        {isAdmin ? (
+          <Box style={{ display: 'flex', flexDirection: 'column' }}>
+            <TopLateChart params={params} />
+          </Box>
+        ) : (
+          <Box style={{ display: 'flex', flexDirection: 'column' }}>
+            <WorkHoursChart params={params} />
+          </Box>
+        )}
+        <Box style={{ display: 'flex', flexDirection: 'column' }}>
           <CheckpointChart params={params} />
-        </Grid.Col>
-      </Grid>
+        </Box>
+      </SimpleGrid>
 
       <YearCalendar />
     </Stack>

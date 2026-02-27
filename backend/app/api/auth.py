@@ -3,7 +3,7 @@ import io
 
 import pyotp
 import qrcode
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response, status
 from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,7 @@ from app.db.models import User
 from app.db.session import get_db
 from app.schemas.auth import (
     FirstLoginRequest,
+    InviteValidationResponse,
     LoginRequest,
     ResetPasswordRequest,
     TOTPSetupResponse,
@@ -52,7 +53,7 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
         httponly=True,
         samesite="lax",
         secure=False,
-        max_age=86400,
+        max_age=900,  # 15 minutes
     )
 
 
@@ -245,6 +246,47 @@ async def reset_password(
     return {"message": "Password reset successful"}
 
 
+@router.get(
+    "/validate-invite",
+    response_model=InviteValidationResponse,
+    summary="Validate invite token and return user info",
+)
+async def validate_invite(
+    token: str = Query(..., description="Invite JWT token"),
+    db: AsyncSession = Depends(get_db),
+) -> InviteValidationResponse:
+    import uuid as _uuid
+
+    try:
+        payload = decode_token(token)
+    except JWTError:
+        return InviteValidationResponse(valid=False)
+
+    if payload.get("type") != "invite":
+        return InviteValidationResponse(valid=False)
+
+    user_id_raw = payload.get("sub")
+    if not user_id_raw:
+        return InviteValidationResponse(valid=False)
+
+    result = await db.execute(select(User).where(User.id == _uuid.UUID(user_id_raw)))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active:
+        return InviteValidationResponse(valid=False)
+
+    # Check that this is the latest invite (jti must match)
+    token_jti = payload.get("jti")
+    if not token_jti or user.invite_jti != token_jti:
+        return InviteValidationResponse(valid=False)
+
+    return InviteValidationResponse(
+        valid=True,
+        has_email=bool(user.email),
+        email=user.email,
+        full_name=user.full_name,
+    )
+
+
 @router.post("/first-login", summary="First login: set email and password via invite token")
 async def first_login(
     body: FirstLoginRequest,
@@ -275,14 +317,25 @@ async def first_login(
     if user is None or not user.is_active:
         raise invalid_token
 
+    # Check that this is the latest invite (jti must match)
+    token_jti = payload.get("jti")
+    if not token_jti or user.invite_jti != token_jti:
+        raise invalid_token
+
     if body.password != body.password_confirm:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Passwords do not match",
         )
 
-    user.email = body.email
+    # Only update email if provided; existing email is kept for returning users
+    if body.email:
+        user.email = body.email
     user.password_hash = hash_password(body.password)
+    # Reset 2FA so user sets it up again
+    user.totp_secret = None
+    # Invalidate the invite link after use
+    user.invite_jti = None
     await db.commit()
 
     temp = create_temp_token({"sub": str(user.id)})

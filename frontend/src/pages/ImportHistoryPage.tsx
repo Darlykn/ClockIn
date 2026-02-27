@@ -231,22 +231,28 @@ export function ImportHistoryPage() {
           <Text c="dimmed">Файлы ещё не загружались</Text>
         </Paper>
       ) : (
-        <Paper
-          withBorder
-          radius="md"
-          style={{
-            overflow: 'hidden',
-            borderColor: 'var(--border-subtle)',
-            backgroundColor: 'var(--bg-card)',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        <Accordion
+          chevronPosition="right"
+          variant="separated"
+          multiple
+          styles={{
+            root: {
+              gap: 6,
+              display: 'flex',
+              flexDirection: 'column',
+            },
+            item: {
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+              borderRadius: 'var(--mantine-radius-md)',
+              marginTop: 0,
+            },
           }}
         >
-          <Accordion chevronPosition="right" variant="separated" multiple>
-            {data.map((item) => (
-              <HistoryAccordionItem key={item.id} item={item} />
-            ))}
-          </Accordion>
-        </Paper>
+          {data.map((item) => (
+            <HistoryAccordionItem key={item.id} item={item} />
+          ))}
+        </Accordion>
       )}
     </Stack>
   );

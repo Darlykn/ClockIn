@@ -6,14 +6,16 @@ export function useUsers(search?: string) {
   return useQuery({
     queryKey: ['users', search],
     queryFn: () => usersApi.list(search),
+    placeholderData: (prev) => prev,
   });
 }
 
-export function useEmployees() {
+export function useEmployees(enabled: boolean = true) {
   return useQuery({
     queryKey: ['employees'],
     queryFn: () => usersApi.listEmployees(),
     staleTime: 10 * 60 * 1000,
+    enabled,
   });
 }
 

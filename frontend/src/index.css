@@ -1,3 +1,9 @@
+@font-face {
+  font-family: 'Inter';
+  font-display: optional;
+  src: local('Inter');
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -11,8 +17,8 @@ body {
 /* ─── Design Tokens — Layer 1: Neutral Base ─── */
 :root,
 [data-mantine-color-scheme="light"] {
-  --bg-page:        #F4F4F5;
-  --bg-sidebar:     #ECECEC;
+  --bg-page:        #F7F9FB;
+  --bg-sidebar:     #f0f2f6;
   --bg-card:        #FFFFFF;
   --border-subtle:  #E2E2E2;
   --border-strong:  #D4D4D4;
@@ -61,7 +67,21 @@ body {
 
 /* ─── Карточки ─── */
 .mantine-Paper-root {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  background-color: var(--bg-card) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04) !important;
+  transition: box-shadow 0.2s ease;
+}
+
+.mantine-Paper-root:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06) !important;
+}
+
+/* ─── Мобильный сайдбар: показывать как панель, не на весь экран ─── */
+@media (max-width: 767px) {
+  .mantine-AppShell-navbar {
+    width: 220px !important;
+    max-width: 220px !important;
+  }
 }
 
 /* ─── Recharts / Charts: убираем outline и выделение ─── */

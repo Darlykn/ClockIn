@@ -71,11 +71,11 @@ export function CheckpointChart({ params }: CheckpointChartProps) {
       </Text>
       <div
         className="chart-no-selection"
-        style={{ flex: 1, minHeight: 220, outline: 'none', userSelect: 'none' }}
+        style={{ flex: 1, minHeight: 320, outline: 'none', userSelect: 'none' }}
         onMouseDown={(e) => { const t = e.target as Element; if (t.closest('svg')) e.preventDefault(); }}
       >
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart margin={{ top: 0, right: 16, bottom: 12, left: 16 }}>
+        <PieChart margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
           <Pie
             data={chartData}
             dataKey="value"
@@ -157,7 +157,7 @@ export function CheckpointChart({ params }: CheckpointChartProps) {
             layout="horizontal"
             align="center"
             verticalAlign="bottom"
-            wrapperStyle={{ paddingTop: 0 }}
+            wrapperStyle={{ paddingTop: 12 }}
             formatter={(value) => (
               <span style={{ color: textColor, fontSize: 11 }}>{value}</span>
             )}

@@ -7,7 +7,7 @@ import { ProtectedRoute } from './components/Layout/ProtectedRoute';
 import { AppLayout } from './components/Layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { CalendarPage } from './pages/CalendarPage';
+
 import { UploadPage } from './pages/UploadPage';
 import { ImportHistoryPage } from './pages/ImportHistoryPage';
 import { UsersPage } from './pages/UsersPage';
@@ -37,16 +37,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/calendar"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CalendarPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/upload"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
@@ -59,7 +49,7 @@ function AppRoutes() {
       <Route
         path="/history"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+          <ProtectedRoute allowedRoles={['admin']}>
             <AppLayout>
               <ImportHistoryPage />
             </AppLayout>

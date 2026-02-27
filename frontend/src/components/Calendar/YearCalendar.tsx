@@ -66,11 +66,11 @@ interface TooltipContent {
 
 export function YearCalendar() {
   const { user } = useAuth();
-  const { data: employees } = useEmployees();
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+  const { data: employees } = useEmployees(isAdmin);
 
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(
-    isAdmin ? null : String(user?.employee_id ?? '')
+    isAdmin ? null : (user?.id ?? null)
   );
   const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null);
@@ -174,10 +174,9 @@ export function YearCalendar() {
   if (isLoading) return <Skeleton height={200} radius="md" />;
 
   return (
-    <Paper p="md" withBorder radius="md">
+    <Paper p="md" pl="lg" withBorder radius="md">
       <Stack gap="md">
-        {/* Header: selectors left, count right */}
-        <Group justify="space-between" align="flex-end" wrap="wrap">
+        <Group justify="space-between" align="center" wrap="wrap">
           <Group gap="sm" align="flex-end" wrap="wrap">
             {isAdmin && (
               <Select
@@ -201,7 +200,7 @@ export function YearCalendar() {
               size="sm"
             />
           </Group>
-          <Text fw={600} size="lg">
+          <Text fw={500} size="sm" c="dimmed">
             {activeCount}{' '}
             {activeCount === 1
               ? 'активность'
@@ -287,8 +286,8 @@ export function YearCalendar() {
                         );
                       }
 
-                      // Future days — white fill + faint dashed border (no opacity on the whole cell)
-                      if (isFuture) {
+                      // Future days or past days without data — gray placeholder
+                      if (isFuture || !dayData) {
                         return (
                           <Box
                             key={di}
@@ -296,19 +295,16 @@ export function YearCalendar() {
                               width: CELL_SIZE,
                               height: CELL_SIZE,
                               borderRadius: 2,
-                              backgroundColor: 'var(--mantine-color-white)',
-                              border: '1px dashed rgba(0, 0, 0, 0.12)',
-                              boxSizing: 'border-box',
+                              backgroundColor: '#e9ecef',
+                              opacity: 0.5,
                             }}
                           />
                         );
                       }
 
-                      // Past days
-                      const color = dayData
-                        ? STATUS_COLORS[dayData.status]
-                        : 'var(--mantine-color-default-border)';
-                      const opacity = dayData ? 1 : 0.3;
+                      // Days with data
+                      const color = STATUS_COLORS[dayData.status];
+                      const opacity = 1;
 
                       return (
                         <Box
