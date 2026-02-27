@@ -54,7 +54,7 @@
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone <url-репозитория>
+git clone https://github.com/Darlykn/AttendTrack
 cd AttendTrack
 ```
 
