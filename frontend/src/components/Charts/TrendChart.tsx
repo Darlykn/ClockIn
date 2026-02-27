@@ -25,8 +25,10 @@ export function TrendChart({ params }: TrendChartProps) {
   const colorScheme = useComputedColorScheme('light');
   const isDark = colorScheme === 'dark';
 
-  const textColor = isDark ? '#c1c2c5' : '#495057';
-  const gridColor = isDark ? '#373a40' : '#dee2e6';
+  const textColor = isDark ? '#666666' : '#6B6B6F';
+  const gridColor = isDark ? '#2A2A2A' : '#E2E2E2';
+  const tooltipBg = isDark ? '#222222' : '#FFFFFF';
+  const tooltipText = isDark ? '#E0E0E0' : '#2C2C2E';
 
   if (isLoading) return <Skeleton height={280} radius="md" />;
   if (isError)
@@ -60,9 +62,13 @@ export function TrendChart({ params }: TrendChartProps) {
           <Tooltip
             formatter={(value) => [`${(value as number).toFixed(1)}%`, 'Посещаемость']}
             contentStyle={{
-              background: isDark ? '#25262b' : '#fff',
+              background: tooltipBg,
               border: `1px solid ${gridColor}`,
-              color: textColor,
+              borderRadius: 8,
+              color: tooltipText,
+              boxShadow: isDark
+                ? '0 4px 16px rgba(0,0,0,0.4)'
+                : '0 4px 16px rgba(0,0,0,0.12)',
             }}
           />
           <Legend />
@@ -70,7 +76,7 @@ export function TrendChart({ params }: TrendChartProps) {
             type="monotone"
             dataKey="attendance_pct"
             name="% посещаемости"
-            stroke="#228be6"
+            stroke='#00B0FF'
             strokeWidth={2}
             dot={{ r: 4 }}
             activeDot={{ r: 6 }}

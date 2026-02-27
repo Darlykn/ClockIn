@@ -15,14 +15,23 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
   Alert,
+  ActionIcon,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconKey } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconKey,
+  IconSun,
+  IconMoon,
+} from '@tabler/icons-react';
+import { useMantineColorScheme, useComputedColorScheme } from '@mantine/core';
 import { useAuth } from '../providers/AuthProvider';
 import { authApi } from '../api/auth';
+
+import BlackFull from '../assets/BlackFull.png';
+import whiteFull from '../assets/whiteFull.png';
 
 type LoginStep = 'credentials' | 'setup2fa' | 'verify2fa';
 
@@ -34,6 +43,9 @@ interface FormValues {
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, setupTOTP, verifyTOTP } = useAuth();
+  const { toggleColorScheme } = useMantineColorScheme();
+  const colorScheme = useComputedColorScheme('light');
+  const isDark = colorScheme === 'dark';
 
   const [step, setStep] = useState<LoginStep>('credentials');
   const [tempToken, setTempToken] = useState('');
@@ -131,21 +143,38 @@ export function LoginPage() {
 
   return (
     <Center h="100vh" style={{ background: 'var(--bg-page)' }}>
+      {/* Theme toggle */}
+      <ActionIcon
+        variant="subtle"
+        color="gray"
+        onClick={toggleColorScheme}
+        title="Переключить тему"
+        size="lg"
+        style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}
+      >
+        {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
+      </ActionIcon>
+
       <Box w={420} pos="relative">
         <LoadingOverlay visible={loading} />
 
         <Paper
-          p="xl"
+          p={32}
           radius="lg"
           withBorder
-          shadow="md"
-          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+          style={{
+            borderColor: 'var(--border-subtle)',
+            backgroundColor: 'var(--bg-card)',
+            boxShadow: 'var(--shadow-lg)',
+          }}
         >
           <Stack gap="lg">
             <Stack gap={4} align="center">
-              <Title order={2} fw={700}>
-                AttendTrack
-              </Title>
+              <img
+                src={isDark ? BlackFull : whiteFull}
+                alt="ClockIn"
+                style={{ height: 40, width: 'auto', objectFit: 'contain', marginBottom: 8 }}
+              />
               <Text c="dimmed" size="sm">
                 {step === 'credentials' && 'Войдите в систему'}
                 {step === 'setup2fa' && 'Настройка двухфакторной аутентификации'}

@@ -9,6 +9,7 @@ import {
   Skeleton,
   Box,
 } from '@mantine/core';
+import { useComputedColorScheme } from '@mantine/core';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import 'dayjs/locale/ru';
@@ -20,12 +21,20 @@ import type { DailyStatus, DayStatus } from '../../types';
 dayjs.extend(isoWeek);
 dayjs.locale('ru');
 
-const STATUS_COLORS: Record<DayStatus, string> = {
-  normal: '#2f9e44',
-  late: '#e67700',
-  absent: '#c92a2a',
-  weekend: '#868e96',
-};
+function useStatusColors() {
+  const colorScheme = useComputedColorScheme('light');
+  const isDark = colorScheme === 'dark';
+
+  return useMemo(() => ({
+    colors: {
+      normal: isDark ? '#00E676' : '#00C853',
+      late: isDark ? '#FFAB40' : '#FF9100',
+      absent: isDark ? '#FF5252' : '#FF1744',
+      weekend: isDark ? '#444444' : '#A0A0A0',
+    } as Record<DayStatus, string>,
+    placeholder: isDark ? '#2A2A2A' : '#e9ecef',
+  }), [isDark]);
+}
 
 const STATUS_LABELS: Record<DayStatus, string> = {
   normal: 'Норма',
@@ -68,6 +77,7 @@ export function YearCalendar() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';
   const { data: employees } = useEmployees(isAdmin);
+  const { colors: STATUS_COLORS, placeholder: placeholderColor } = useStatusColors();
 
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(
     isAdmin ? null : (user?.id ?? null)
@@ -286,8 +296,8 @@ export function YearCalendar() {
                         );
                       }
 
-                      // Future days — white fill + faint dashed border (no opacity on the whole cell)
-                      if (isFuture) {
+                      // Future days or past days without data — gray placeholder
+                      if (isFuture || !dayData) {
                         return (
                           <Box
                             key={di}
@@ -295,19 +305,15 @@ export function YearCalendar() {
                               width: CELL_SIZE,
                               height: CELL_SIZE,
                               borderRadius: 2,
-                              backgroundColor: 'var(--mantine-color-white)',
-                              border: '1px dashed rgba(0, 0, 0, 0.12)',
-                              boxSizing: 'border-box',
+                              backgroundColor: placeholderColor,
+                              opacity: 0.5,
                             }}
                           />
                         );
                       }
 
-                      // Past days
-                      const color = dayData
-                        ? STATUS_COLORS[dayData.status]
-                        : 'var(--mantine-color-default-border)';
-                      const opacity = dayData ? 1 : 0.3;
+                      // Days with data
+                      const color = STATUS_COLORS[dayData.status];
 
                       return (
                         <Box
@@ -317,11 +323,19 @@ export function YearCalendar() {
                             height: CELL_SIZE,
                             borderRadius: 2,
                             backgroundColor: color,
-                            opacity,
-                            cursor: dayData ? 'pointer' : 'default',
+                            cursor: 'pointer',
+                            transition: 'transform 100ms ease, box-shadow 100ms ease',
                           }}
-                          onMouseEnter={dayData ? (e) => handleMouseEnter(e, dayData) : undefined}
-                          onMouseLeave={dayData ? handleMouseLeave : undefined}
+                          onMouseEnter={(e) => {
+                            (e.target as HTMLDivElement).style.transform = 'scale(1.3)';
+                            (e.target as HTMLDivElement).style.boxShadow = `0 0 6px ${color}`;
+                            handleMouseEnter(e, dayData);
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.target as HTMLDivElement).style.transform = 'scale(1)';
+                            (e.target as HTMLDivElement).style.boxShadow = 'none';
+                            handleMouseLeave();
+                          }}
                         />
                       );
                     })}
@@ -333,7 +347,7 @@ export function YearCalendar() {
 
         </Box>
 
-        {tooltip && <TooltipPopup tooltip={tooltip} />}
+        {tooltip && <TooltipPopup tooltip={tooltip} statusColors={STATUS_COLORS} />}
 
         {/* Legend */}
         <Group gap="sm" wrap="wrap">
@@ -358,7 +372,7 @@ export function YearCalendar() {
   );
 }
 
-function TooltipPopup({ tooltip }: { tooltip: TooltipContent }) {
+function TooltipPopup({ tooltip, statusColors }: { tooltip: TooltipContent; statusColors: Record<DayStatus, string> }) {
   const { dayData, clientX, clientY, cellBottom } = tooltip;
 
   const lateMinutes = useMemo(() => {
@@ -373,6 +387,9 @@ function TooltipPopup({ tooltip }: { tooltip: TooltipContent }) {
   const top = showBelow ? cellBottom + 4 : clientY - 8;
   const transform = showBelow ? 'translateX(-50%)' : 'translate(-50%, -100%)';
 
+  // statusColors used for potential future enhancements (kept for API consistency)
+  void statusColors;
+
   return (
     <Box
       style={{
@@ -385,7 +402,15 @@ function TooltipPopup({ tooltip }: { tooltip: TooltipContent }) {
         minWidth: 164,
       }}
     >
-      <Paper shadow="md" p="xs" withBorder radius="md">
+      <Paper
+        p="xs"
+        withBorder
+        radius="md"
+        style={{
+          backgroundColor: 'var(--bg-elevated)',
+          boxShadow: 'var(--shadow-lg)',
+        }}
+      >
         <Stack gap={4}>
           <Group justify="space-between" gap="xs" wrap="nowrap">
             <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>

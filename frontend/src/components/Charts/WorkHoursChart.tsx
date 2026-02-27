@@ -38,8 +38,10 @@ export function WorkHoursChart({ params }: WorkHoursChartProps) {
 
   const colorScheme = useComputedColorScheme('light');
   const isDark = colorScheme === 'dark';
-  const textColor = isDark ? '#c1c2c5' : '#495057';
-  const gridColor = isDark ? '#373a40' : '#dee2e6';
+  const textColor = isDark ? '#666666' : '#6B6B6F';
+  const gridColor = isDark ? '#2A2A2A' : '#E2E2E2';
+  const tooltipBg = isDark ? '#222222' : '#FFFFFF';
+  const tooltipText = isDark ? '#E0E0E0' : '#2C2C2E';
 
   const chartData = useMemo(() => {
     if (!logs || logs.length === 0) return [];
@@ -127,12 +129,12 @@ export function WorkHoursChart({ params }: WorkHoursChartProps) {
             />
             <ReferenceLine
               y={8}
-              stroke="#40c057"
+              stroke="#00E676"
               strokeDasharray="5 5"
               label={{
                 value: '8 ч',
                 position: 'right',
-                fill: '#40c057',
+                fill: '#00E676',
                 fontSize: 11,
               }}
             />
@@ -148,12 +150,15 @@ export function WorkHoursChart({ params }: WorkHoursChartProps) {
                 return (
                   <div
                     style={{
-                      background: isDark ? '#25262b' : '#fff',
+                      background: tooltipBg,
                       border: `1px solid ${gridColor}`,
                       borderRadius: 8,
                       padding: '8px 12px',
-                      color: textColor,
+                      color: tooltipText,
                       fontSize: 12,
+                      boxShadow: isDark
+                        ? '0 4px 16px rgba(0,0,0,0.4)'
+                        : '0 4px 16px rgba(0,0,0,0.12)',
                     }}
                   >
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>{d.fullDate}</div>
@@ -170,7 +175,7 @@ export function WorkHoursChart({ params }: WorkHoursChartProps) {
               {chartData.map((d, i) => (
                 <Cell
                   key={i}
-                  fill={d.hours >= 8 ? '#228be6' : d.hours >= 6 ? '#fab005' : '#fa5252'}
+                  fill={d.hours >= 8 ? '#00E676' : d.hours >= 6 ? '#FFAB40' : '#FF5252'}
                 />
               ))}
             </Bar>

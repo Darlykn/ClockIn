@@ -38,6 +38,8 @@ import {
   IconEdit,
   IconLink,
   IconChevronDown,
+  IconChevronUp,
+  IconSelector,
   IconDownload,
   IconLogin2,
   IconLogout,
@@ -87,7 +89,6 @@ interface SortHeaderProps {
 
 function SortHeader({ field, sortField, sortDir, onSort, children }: SortHeaderProps) {
   const active = sortField === field;
-  const sortIcon = active ? (sortDir === 'asc' ? '^' : '˅') : '^˅';
   return (
     <UnstyledButton
       onClick={() => onSort(field)}
@@ -103,18 +104,20 @@ function SortHeader({ field, sortField, sortDir, onSort, children }: SortHeaderP
       <Text fw={600} size="sm" style={{ whiteSpace: 'nowrap' }}>
         {children}
       </Text>
-      <Text
-        fw={600}
-        size="xs"
-        style={{
-          opacity: active ? 1 : 0.35,
-          marginLeft: 8,
-          flexShrink: 0,
-          fontFamily: 'ui-monospace, monospace',
-        }}
-      >
-        {sortIcon}
-      </Text>
+      <Box style={{ marginLeft: 8, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        {active ? (
+          <IconChevronUp
+            size={14}
+            style={{
+              color: 'var(--primary-500)',
+              transition: 'transform var(--transition-fast)',
+              transform: sortDir === 'desc' ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}
+          />
+        ) : (
+          <IconSelector size={14} style={{ opacity: 0.35 }} />
+        )}
+      </Box>
     </UnstyledButton>
   );
 }
@@ -331,7 +334,7 @@ function AttendancePanel({ user }: AttendancePanelProps) {
   };
 
   return (
-    <Box p="md" style={{ background: 'var(--bg-sidebar)' }}>
+    <Box p="md" style={{ background: 'var(--bg-inset)' }}>
       {/* Period selector + export */}
       <Group align="flex-end" gap="sm" wrap="wrap" mb="md">
         <DatePickerInput
@@ -437,7 +440,7 @@ function AttendancePanel({ user }: AttendancePanelProps) {
 export function UsersPage() {
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'admin';
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isCompact = useMediaQuery('(max-width: 1330px)');
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
@@ -634,8 +637,8 @@ export function UsersPage() {
         />
       </Group>
 
-      {/* Mobile: card layout */}
-      {isMobile ? (
+      {/* Compact: card layout */}
+      {isCompact ? (
         <Stack gap="sm">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height={100} radius="md" />)
@@ -674,7 +677,7 @@ export function UsersPage() {
             overflow: 'hidden',
             borderColor: 'var(--border-subtle)',
             backgroundColor: 'var(--bg-card)',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <ScrollArea>
@@ -863,42 +866,48 @@ function UserCard({ u, currentUserId, showActions, onEdit, onCopyLink, onToggleA
     <Paper
       withBorder
       radius="md"
-      p="sm"
+      p="md"
       style={{
         borderColor: 'var(--border-subtle)',
         backgroundColor: 'var(--bg-card)',
+        transition: 'box-shadow var(--transition-fast)',
       }}
     >
-      <Stack gap="xs">
+      <Stack gap="sm">
+        {/* Row 1: Name + status */}
         <Group justify="space-between" align="flex-start" wrap="nowrap">
-          <Stack gap={4} style={{ minWidth: 0, flex: 1 }}>
-            <Text fw={600} size="sm" lineClamp={1}>{u.full_name}</Text>
-            <Text size="xs" ff="monospace" c="dimmed">{u.username}</Text>
+          <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+            <Text fw={700} size="md" lineClamp={1}>{u.full_name}</Text>
+            <Text size="sm" ff="monospace" c="dimmed">{u.username}</Text>
           </Stack>
-          <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
-            <Badge color={u.is_active ? 'green' : 'brand'} size="xs" variant="light">
-              {u.is_active ? 'Активен' : 'Заблокирован'}
-            </Badge>
-          </Group>
+          <Badge color={u.is_active ? 'green' : 'brand'} size="sm" variant="light" style={{ flexShrink: 0 }}>
+            {u.is_active ? 'Активен' : 'Заблокирован'}
+          </Badge>
         </Group>
 
-        <Group gap="xs" wrap="wrap">
-          <Badge color={ROLE_COLORS[u.role]} size="xs">{ROLE_LABELS[u.role]}</Badge>
-          <Badge color={u.has_2fa ? 'green' : 'gray'} variant="dot" size="xs">
+        {/* Row 2: Badges + email */}
+        <Group gap="sm" wrap="wrap">
+          <Badge color={ROLE_COLORS[u.role]} size="sm">{ROLE_LABELS[u.role]}</Badge>
+          <Badge color={u.has_2fa ? 'green' : 'gray'} variant="dot" size="sm">
             {u.has_2fa ? '2FA' : 'Без 2FA'}
           </Badge>
-          {u.email && <Text size="xs" c="dimmed" lineClamp={1}>{u.email}</Text>}
+          {u.email && (
+            <Text size="sm" c="dimmed" lineClamp={1} style={{ marginLeft: 'auto' }}>
+              {u.email}
+            </Text>
+          )}
         </Group>
 
-        <Group gap="xs" justify="space-between">
+        {/* Row 3: Actions */}
+        <Group gap="sm" wrap="wrap">
           <Button
-            variant="subtle"
+            variant="light"
             size="xs"
             color="gray"
             onClick={() => setExpanded((e) => !e)}
             leftSection={
               <IconChevronDown
-                size={12}
+                size={14}
                 style={{
                   transition: 'transform 200ms ease',
                   transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -909,22 +918,23 @@ function UserCard({ u, currentUserId, showActions, onEdit, onCopyLink, onToggleA
             Посещаемость
           </Button>
           {showActions && (
-            <Group gap={4}>
-              <ActionIcon variant="subtle" size="sm" color="gray" onClick={onEdit}>
-                <IconEdit size={14} />
-              </ActionIcon>
-              <ActionIcon variant="subtle" size="sm" color="blue" onClick={onCopyLink}>
-                <IconLink size={14} />
-              </ActionIcon>
+            <Group gap="xs" style={{ marginLeft: 'auto' }}>
+              <Button variant="light" size="xs" color="gray" leftSection={<IconEdit size={14} />} onClick={onEdit}>
+                Изменить
+              </Button>
+              <Button variant="light" size="xs" color="blue" leftSection={<IconLink size={14} />} onClick={onCopyLink}>
+                Ссылка
+              </Button>
               {currentUserId !== u.id && (
-                <ActionIcon
-                  variant="subtle"
-                  size="sm"
-                  color={u.is_active ? 'brand' : 'green'}
+                <Button
+                  variant="light"
+                  size="xs"
+                  color={u.is_active ? 'red' : 'green'}
+                  leftSection={u.is_active ? <IconUserOff size={14} /> : <IconUserCheck size={14} />}
                   onClick={onToggleActive}
                 >
-                  {u.is_active ? <IconUserOff size={14} /> : <IconUserCheck size={14} />}
-                </ActionIcon>
+                  {u.is_active ? 'Блок.' : 'Актив.'}
+                </Button>
               )}
             </Group>
           )}
@@ -932,7 +942,7 @@ function UserCard({ u, currentUserId, showActions, onEdit, onCopyLink, onToggleA
       </Stack>
 
       <Collapse in={expanded} transitionDuration={250}>
-        <Box mt="xs">
+        <Box mt="sm">
           <AttendancePanel user={u} />
         </Box>
       </Collapse>

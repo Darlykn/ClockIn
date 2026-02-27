@@ -11,17 +11,18 @@ import {
 import { useCheckpoints } from '../../hooks/useStats';
 import type { StatsParams } from '../../api/stats';
 
-const COLORS = [
-  '#228be6',
-  '#40c057',
-  '#fab005',
-  '#fa5252',
-  '#be4bdb',
-  '#15aabf',
-  '#fd7e14',
-  '#e64980',
-  '#74c0fc',
-  '#a9e34b',
+// Vibrant palette
+const CHART_COLORS = [
+  '#FF5252',  // watermelon red
+  '#40CAFF',  // bubblegum blue
+  '#FFAB40',  // peachy orange
+  '#00E676',  // mint green
+  '#FFD600',  // pineapple yellow
+  '#00B0FF',  // blue raspberry
+  '#FF9100',  // tangerine orange
+  '#18FFFF',  // aqua blue
+  '#76FF03',  // apple green
+  '#FFEA00',  // lemon yellow
 ];
 
 interface CheckpointChartProps {
@@ -40,7 +41,11 @@ export function CheckpointChart({ params }: CheckpointChartProps) {
   const colorScheme = useComputedColorScheme('light');
   const isDark = colorScheme === 'dark';
 
-  const textColor = isDark ? '#c1c2c5' : '#495057';
+  const textColor = isDark ? '#666666' : '#6B6B6F';
+  const tooltipBg = isDark ? '#222222' : '#FFFFFF';
+  const tooltipText = isDark ? '#E0E0E0' : '#2C2C2E';
+  const tooltipMuted = isDark ? '#999999' : '#6B6B6F';
+  const borderColor = isDark ? '#2A2A2A' : '#E2E2E2';
 
   if (isLoading) return <Skeleton height={320} radius="md" />;
   if (isError)
@@ -83,9 +88,10 @@ export function CheckpointChart({ params }: CheckpointChartProps) {
             cx="50%"
             cy="50%"
             outerRadius={115}
+            stroke="none"
           >
             {chartData.map((_, index) => (
-              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+              <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
             ))}
           </Pie>
           <Tooltip
@@ -100,14 +106,12 @@ export function CheckpointChart({ params }: CheckpointChartProps) {
               return (
                 <div
                   style={{
-                    background: isDark
-                      ? 'linear-gradient(135deg, #1a1b1e 0%, #25262b 100%)'
-                      : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                    border: `1px solid ${isDark ? '#373a40' : '#dee2e6'}`,
-                    borderRadius: 10,
+                    background: tooltipBg,
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: 8,
                     padding: '10px 14px',
                     boxShadow: isDark
-                      ? '0 4px 16px rgba(0,0,0,0.5)'
+                      ? '0 4px 16px rgba(0,0,0,0.4)'
                       : '0 4px 16px rgba(0,0,0,0.12)',
                     minWidth: 160,
                   }}
@@ -127,22 +131,22 @@ export function CheckpointChart({ params }: CheckpointChartProps) {
                       style={{
                         fontWeight: 600,
                         fontSize: 13,
-                        color: textColor,
+                        color: tooltipText,
                       }}
                     >
                       {entry.shortName}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-                    <span style={{ fontSize: 12, color: isDark ? '#909296' : '#868e96' }}>
+                    <span style={{ fontSize: 12, color: tooltipMuted }}>
                       Проходов
                     </span>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: textColor }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: tooltipText }}>
                       {entry.value}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-                    <span style={{ fontSize: 12, color: isDark ? '#909296' : '#868e96' }}>
+                    <span style={{ fontSize: 12, color: tooltipMuted }}>
                       Доля
                     </span>
                     <span style={{ fontSize: 12, fontWeight: 600, color }}>

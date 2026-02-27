@@ -32,6 +32,11 @@ import { useAuth } from '../../providers/AuthProvider';
 import { useLogout } from '../../hooks/useAuth';
 import type { ReactNode } from 'react';
 
+import BlackFull from '../../assets/BlackFull.png';
+import BlackMin from '../../assets/BlackMin.png';
+import whiteFull from '../../assets/whiteFull.png';
+import whiteMin from '../../assets/whiteMin.png';
+
 const SIDEBAR_FULL = 220;
 const SIDEBAR_MINI = 60;
 
@@ -76,6 +81,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { toggleColorScheme } = useMantineColorScheme();
   const colorScheme = useComputedColorScheme('light');
   const [menuOpened, setMenuOpened] = useState(false);
+  const isDark = colorScheme === 'dark';
 
   const filteredNav = NAV_ITEMS.filter(
     (item) => user && item.roles.includes(user.role)
@@ -87,6 +93,11 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   const sidebarWidth = collapsed ? SIDEBAR_MINI : SIDEBAR_FULL;
+
+  // Logo selection based on theme and collapsed state
+  const logoSrc = isDark
+    ? (collapsed ? BlackMin : BlackFull)
+    : (collapsed ? whiteMin : whiteFull);
 
   return (
     <AppShell
@@ -111,14 +122,22 @@ export function AppLayout({ children }: AppLayoutProps) {
         style={{
           backgroundColor: 'var(--bg-card)',
           borderBottomColor: 'var(--border-subtle)',
+          boxShadow: 'var(--shadow-xs)',
         }}
       >
         <Group h="100%" px="md" justify="space-between">
           <Group gap="xs">
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Text fw={700} size="lg" style={{ color: 'var(--primary-500)', whiteSpace: 'nowrap' }}>
-              {collapsed ? 'A' : 'AttendTrack'}
-            </Text>
+            <img
+              src={logoSrc}
+              alt="ClockIn"
+              style={{
+                height: 32,
+                width: 'auto',
+                objectFit: 'contain',
+                transition: 'opacity var(--transition-normal)',
+              }}
+            />
           </Group>
 
           <Group gap="sm">
@@ -128,11 +147,12 @@ export function AppLayout({ children }: AppLayoutProps) {
               onClick={toggleColorScheme}
               title="Переключить тему"
               size="lg"
+              style={{ transition: 'transform var(--transition-fast)' }}
             >
-              {colorScheme === 'dark' ? (
-                <IconSun size={18} />
+              {isDark ? (
+                <IconSun size={18} style={{ transition: 'transform var(--transition-normal)' }} />
               ) : (
-                <IconMoon size={18} />
+                <IconMoon size={18} style={{ transition: 'transform var(--transition-normal)' }} />
               )}
             </ActionIcon>
 
@@ -198,6 +218,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                       size={40}
                       radius="md"
                       onClick={() => navigate(item.path)}
+                      style={{ transition: 'all var(--transition-fast)' }}
                     >
                       <item.icon size={20} />
                     </ActionIcon>
@@ -261,6 +282,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             color="gray"
             size="md"
             onClick={() => setCollapsed((c) => !c)}
+            style={{ transition: 'all var(--transition-fast)' }}
           >
             {collapsed ? (
               <IconLayoutSidebarLeftExpand size={16} />

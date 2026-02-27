@@ -47,24 +47,43 @@ function StatsCard({ title, value, icon: Icon, color, loading }: StatsCardProps)
   return (
     <Paper
       p="sm"
-      withBorder
       radius="md"
       style={{
-        borderColor: 'var(--border-subtle)',
         backgroundColor: 'var(--bg-card)',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        boxShadow: 'var(--shadow-card)',
         minWidth: 0,
+        cursor: 'default',
+        transition: 'transform var(--transition-fast), box-shadow var(--transition-fast)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-1px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-card)';
       }}
     >
       <Group gap="sm" wrap="nowrap" align="center">
-        <ThemeIcon size="lg" variant="light" color={color} radius="md" style={{ flexShrink: 0 }}>
-          <Icon size={18} />
+        <ThemeIcon size={42} variant="light" color={color} radius="md" style={{ flexShrink: 0 }}>
+          <Icon size={20} />
         </ThemeIcon>
         <Stack gap={2} style={{ minWidth: 0, overflow: 'hidden' }}>
-          <Text size="xs" c="dimmed" fw={500} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Text
+            size="xs"
+            c="dimmed"
+            fw={600}
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
             {title}
           </Text>
-          <Text fw={700} size="lg" style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+          <Text fw={700} size="xl" style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
             {value}
           </Text>
         </Stack>
@@ -132,9 +151,11 @@ export function DashboardPage() {
 
       <Paper
         p="md"
-        withBorder
         radius="md"
-        style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          boxShadow: 'var(--shadow-sm)',
+        }}
       >
         <Group gap="md" wrap="wrap">
           {isAdmin && (
@@ -189,10 +210,9 @@ export function DashboardPage() {
       {!isError && !isLoading && !summary && (
         <Paper
           p="xl"
-          withBorder
           ta="center"
           radius="md"
-          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+          style={{ backgroundColor: 'var(--bg-card)' }}
         >
           <Stack align="center" gap="sm">
             <IconUsers size={48} opacity={0.3} />
@@ -208,35 +228,35 @@ export function DashboardPage() {
           title="Посещаемость"
           value={summary ? `${summary.attendance_pct.toFixed(1)}%` : '—'}
           icon={IconCalendarStats}
-          color="blue"
+          color="brand"
           loading={isLoading}
         />
         <StatsCard
-          title="Приход"
+          title="Ср. время входа"
           value={summary?.avg_arrival_time ?? '—'}
           icon={IconClock}
-          color="green"
+          color="brand"
           loading={isLoading}
         />
         <StatsCard
-          title="Уход"
+          title="Ср. время выхода"
           value={summary?.avg_departure_time ?? '—'}
           icon={IconClockHour4}
-          color="cyan"
+          color="brand"
           loading={isLoading}
         />
         <StatsCard
           title="Опоздания"
           value={summary?.late_count ?? '—'}
           icon={IconAlertTriangle}
-          color="orange"
+          color="brand"
           loading={isLoading}
         />
         <StatsCard
           title="Переработки"
           value={summary?.overtime_count ?? '—'}
           icon={IconTrendingUp}
-          color="violet"
+          color="brand"
           loading={isLoading}
         />
         <StatsCard
@@ -247,7 +267,7 @@ export function DashboardPage() {
               : '—'
           }
           icon={IconClock}
-          color="teal"
+          color="brand"
           loading={isLoading}
         />
       </SimpleGrid>

@@ -18,6 +18,8 @@ export function HeatmapChart({ params }: HeatmapChartProps) {
   const colorScheme = useComputedColorScheme('light');
   const isDark = colorScheme === 'dark';
 
+  const textColor = isDark ? '#666666' : '#6B6B6F';
+
   if (isLoading) return <Skeleton height={280} radius="md" />;
   if (isError)
     return (
@@ -43,6 +45,13 @@ export function HeatmapChart({ params }: HeatmapChartProps) {
         const [hour, displayDayIndex, count] = params.value;
         return `${DAY_NAMES[displayDayIndex]}, ${String(hour).padStart(2, '0')}:00 — ${count} проходов`;
       },
+      backgroundColor: isDark ? '#222222' : '#FFFFFF',
+      borderColor: isDark ? '#2A2A2A' : '#E2E2E2',
+      textStyle: { color: isDark ? '#E0E0E0' : '#2C2C2E' },
+      borderRadius: 8,
+      extraCssText: isDark
+        ? 'box-shadow: 0 4px 16px rgba(0,0,0,0.4);'
+        : 'box-shadow: 0 4px 16px rgba(0,0,0,0.12);',
     },
     grid: { height: '70%', top: '10%', left: '10%', right: '18%' },
     xAxis: {
@@ -50,7 +59,7 @@ export function HeatmapChart({ params }: HeatmapChartProps) {
       data: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
       splitArea: { show: true },
       axisLabel: {
-        color: isDark ? '#c1c2c5' : '#495057',
+        color: textColor,
         fontSize: 10,
         interval: 2,
       },
@@ -59,7 +68,7 @@ export function HeatmapChart({ params }: HeatmapChartProps) {
       type: 'category',
       data: DAY_NAMES,
       splitArea: { show: true },
-      axisLabel: { color: isDark ? '#c1c2c5' : '#495057' },
+      axisLabel: { color: textColor },
     },
     visualMap: {
       min: 0,
@@ -70,10 +79,10 @@ export function HeatmapChart({ params }: HeatmapChartProps) {
       top: 'center',
       inRange: {
         color: isDark
-          ? ['#1a1b1e', '#1971c2', '#339af0']
-          : ['#e7f5ff', '#74c0fc', '#1971c2'],
+          ? ['#1A1A1A', '#00B0FF', '#18FFFF']
+          : ['#EFF6FF', '#40CAFF', '#00B0FF'],
       },
-      textStyle: { color: isDark ? '#c1c2c5' : '#495057' },
+      textStyle: { color: textColor },
     },
     series: [
       {

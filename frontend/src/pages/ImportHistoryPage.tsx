@@ -59,7 +59,7 @@ function MiniStat({
   icon: React.ReactNode;
 }) {
   return (
-    <Paper p="xs" withBorder radius="md">
+    <Paper p="xs" withBorder radius="md" style={{ boxShadow: 'var(--shadow-card)' }}>
       <Group gap="xs" wrap="nowrap">
         <ThemeIcon color={color} variant="light" size="md" radius="sm">
           {icon}
@@ -158,7 +158,7 @@ function HistoryAccordionItem({ item }: { item: ImportHistory }) {
             <>
               <Divider label="Причины пропуска строк" labelPosition="left" />
               <ScrollArea h={180}>
-                <Paper p="sm" bg="var(--mantine-color-red-0)" radius="sm">
+                <Paper p="sm" bg="var(--error-50)" radius="sm">
                   <Stack gap={4}>
                     {item.logs.errors.map((err, i) => (
                       <Text key={i} size="xs" c="red" ff="monospace">
@@ -177,7 +177,7 @@ function HistoryAccordionItem({ item }: { item: ImportHistory }) {
             <Stack gap="xs">
               
               <ScrollArea h={160}>
-                <Paper p="sm" bg="var(--mantine-color-blue-0)" radius="sm">
+                <Paper p="sm" bg="var(--info-50)" radius="sm">
                   <Stack gap={4}>
                     {item.logs.skipped_events!.map((msg, i) => (
                       <Text key={i} size="xs" c="blue" ff="monospace">

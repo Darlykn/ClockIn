@@ -41,7 +41,7 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Paper p="sm" withBorder radius="md">
+    <Paper p="sm" withBorder radius="md" style={{ boxShadow: 'var(--shadow-card)' }}>
       <Group gap="sm" wrap="nowrap">
         <ThemeIcon color={color} variant="light" size="lg" radius="md">
           {icon}
@@ -213,7 +213,7 @@ export function UploadPage() {
                   Причины пропуска строк:
                 </Text>
                 <ScrollArea h={200}>
-                  <Paper p="sm" bg="var(--mantine-color-red-0)" radius="sm">
+                  <Paper p="sm" bg="var(--error-50)" radius="sm">
                     <Stack gap={4}>
                       {result.errors.map((err, i) => (
                         <Text key={i} size="xs" c="red" ff="monospace">
@@ -233,7 +233,7 @@ export function UploadPage() {
               </Text>
               {(result.skipped_events?.length ?? 0) > 0 ? (
                 <ScrollArea h={180}>
-                  <Paper p="sm" bg="var(--mantine-color-blue-0)" radius="sm">
+                  <Paper p="sm" bg="var(--info-50)" radius="sm">
                     <Stack gap={4}>
                       {result.skipped_events!.map((msg, i) => (
                         <Text key={i} size="xs" c="blue" ff="monospace">

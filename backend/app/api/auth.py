@@ -53,7 +53,7 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
         httponly=True,
         samesite="lax",
         secure=False,
-        max_age=86400,
+        max_age=900,  # 15 minutes
     )
 
 

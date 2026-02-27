@@ -23,8 +23,10 @@ export function TopLateChart({ params, limit = 10 }: TopLateChartProps) {
   const colorScheme = useComputedColorScheme('light');
   const isDark = colorScheme === 'dark';
 
-  const textColor = isDark ? '#c1c2c5' : '#495057';
-  const gridColor = isDark ? '#373a40' : '#dee2e6';
+  const textColor = isDark ? '#666666' : '#6B6B6F';
+  const gridColor = isDark ? '#2A2A2A' : '#E2E2E2';
+  const tooltipBg = isDark ? '#222222' : '#FFFFFF';
+  const tooltipText = isDark ? '#E0E0E0' : '#2C2C2E';
 
   if (isLoading) return <Skeleton height={280} radius="md" />;
   if (isError)
@@ -76,16 +78,22 @@ export function TopLateChart({ params, limit = 10 }: TopLateChartProps) {
           <Tooltip
             formatter={(v) => [v as number, 'Опоздания']}
             contentStyle={{
-              background: isDark ? '#25262b' : '#fff',
+              background: tooltipBg,
               border: `1px solid ${gridColor}`,
-              color: textColor,
+              borderRadius: 8,
+              color: tooltipText,
+              boxShadow: isDark
+                ? '0 4px 16px rgba(0,0,0,0.4)'
+                : '0 4px 16px rgba(0,0,0,0.12)',
             }}
+            labelStyle={{ color: tooltipText }}
+            itemStyle={{ color: tooltipText }}
           />
           <Bar dataKey="count" radius={[0, 4, 4, 0]}>
             {chartData.map((_, index) => (
               <Cell
                 key={index}
-                fill={index === 0 ? '#fa5252' : index < 3 ? '#ff922b' : '#228be6'}
+                fill={index === 0 ? '#FF5252' : index === 1 ? '#FFD600' : index === 2 ? '#00E676' : '#40CAFF'}
               />
             ))}
           </Bar>

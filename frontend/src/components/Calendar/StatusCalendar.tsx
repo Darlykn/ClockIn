@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Paper,
   Text,
@@ -8,6 +8,7 @@ import {
   Popover,
   Skeleton,
 } from '@mantine/core';
+import { useComputedColorScheme } from '@mantine/core';
 import { Calendar } from '@mantine/dates';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
@@ -16,12 +17,17 @@ import type { DailyStatus, DayStatus } from '../../types';
 
 dayjs.locale('ru');
 
-const STATUS_COLORS: Record<DayStatus, string> = {
-  normal: '#2f9e44',
-  late: '#e67700',
-  absent: '#c92a2a',
-  weekend: '#868e96',
-};
+function useStatusColors() {
+  const colorScheme = useComputedColorScheme('light');
+  const isDark = colorScheme === 'dark';
+
+  return useMemo(() => ({
+    normal: isDark ? '#00E676' : '#00C853',
+    late: isDark ? '#FFAB40' : '#FF9100',
+    absent: isDark ? '#FF5252' : '#FF1744',
+    weekend: isDark ? '#444444' : '#A0A0A0',
+  } as Record<DayStatus, string>), [isDark]);
+}
 
 const STATUS_LABELS: Record<DayStatus, string> = {
   normal: 'Норма',
@@ -39,6 +45,7 @@ interface StatusCalendarProps {
 
 export function StatusCalendar({ employeeId, year, month, onMonthYearChange }: StatusCalendarProps) {
   const { data, isLoading } = useCalendar(employeeId, year, month);
+  const STATUS_COLORS = useStatusColors();
 
   const dayMap = new Map<string, DailyStatus>();
   data?.forEach((d) => dayMap.set(d.date, d));
@@ -98,7 +105,7 @@ export function StatusCalendar({ employeeId, year, month, onMonthYearChange }: S
                   {dayNum}
                 </Text>
               </Popover.Target>
-              <Popover.Dropdown>
+              <Popover.Dropdown style={{ backgroundColor: 'var(--bg-elevated)', boxShadow: 'var(--shadow-lg)' }}>
                 <Stack gap={4}>
                   <Group justify="space-between">
                     <Text size="xs" c="dimmed">

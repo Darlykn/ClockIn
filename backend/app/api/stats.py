@@ -64,22 +64,27 @@ async def get_summary(
 
     if eid is None:
         # Aggregate across all employees (admin "all employees" view)
+        # Exclude "Временный пропуск" employees from aggregate stats
         query = text(
             """
             WITH daily AS (
                 SELECT
                     DATE(event_time AT TIME ZONE 'UTC') AS day,
-                    employee_id,
+                    a.employee_id,
                     MIN(event_time AT TIME ZONE 'UTC')  AS first_entry,
                     MAX(event_time AT TIME ZONE 'UTC')  AS last_exit
-                FROM attendance_logs
+                FROM attendance_logs a
+                JOIN users u ON a.employee_id = u.id
                 WHERE event_time BETWEEN :dt_from AND :dt_to
-                GROUP BY DATE(event_time AT TIME ZONE 'UTC'), employee_id
+                  AND u.full_name NOT ILIKE '%%Временный пропуск%%'
+                GROUP BY DATE(event_time AT TIME ZONE 'UTC'), a.employee_id
             )
             SELECT
                 COUNT(*)                                             AS worked_days,
-                (SELECT COUNT(DISTINCT employee_id) FROM attendance_logs
-                 WHERE event_time BETWEEN :dt_from AND :dt_to)       AS total_employees,
+                (SELECT COUNT(DISTINCT a.employee_id) FROM attendance_logs a
+                 JOIN users u ON a.employee_id = u.id
+                 WHERE event_time BETWEEN :dt_from AND :dt_to
+                   AND u.full_name NOT ILIKE '%%Временный пропуск%%')  AS total_employees,
                 AVG(EXTRACT(EPOCH FROM first_entry::time))           AS avg_arrival_sec,
                 AVG(EXTRACT(EPOCH FROM last_exit::time))             AS avg_departure_sec,
                 SUM(CASE WHEN EXTRACT(EPOCH FROM first_entry::time) > :late_sec THEN 1 ELSE 0 END)
@@ -103,7 +108,21 @@ async def get_summary(
 
         worked_days = int(row["worked_days"] or 0)
         total_employees = int(row["total_employees"] or 0)
-        total_workdays = _count_workdays(df, dt) * total_employees
+        # Count workdays only in months that have actual data (exclude empty months)
+        months_q = text(
+            """
+            SELECT DISTINCT
+                EXTRACT(YEAR FROM event_time AT TIME ZONE 'UTC')::int  AS y,
+                EXTRACT(MONTH FROM event_time AT TIME ZONE 'UTC')::int AS m
+            FROM attendance_logs a
+            JOIN users u ON a.employee_id = u.id
+            WHERE event_time BETWEEN :dt_from AND :dt_to
+              AND u.full_name NOT ILIKE '%%Временный пропуск%%'
+            """
+        )
+        months_res = await db.execute(months_q, {"dt_from": dt_from, "dt_to": dt_to})
+        data_months = {(r["y"], r["m"]) for r in months_res.mappings().all()}
+        total_workdays = _count_workdays_for_months(df, dt, data_months) * total_employees if total_employees > 0 else 0
     else:
         query = text(
             """
@@ -142,7 +161,20 @@ async def get_summary(
         row = result.mappings().one()
 
         worked_days = int(row["worked_days"] or 0)
-        total_workdays = _count_workdays(df, dt)
+        # Count workdays only in months that have data for this employee
+        emp_months_q = text(
+            """
+            SELECT DISTINCT
+                EXTRACT(YEAR FROM event_time AT TIME ZONE 'UTC')::int  AS y,
+                EXTRACT(MONTH FROM event_time AT TIME ZONE 'UTC')::int AS m
+            FROM attendance_logs
+            WHERE employee_id = :eid
+              AND event_time BETWEEN :dt_from AND :dt_to
+            """
+        )
+        emp_months_res = await db.execute(emp_months_q, {"eid": str(eid), "dt_from": dt_from, "dt_to": dt_to})
+        emp_data_months = {(r["y"], r["m"]) for r in emp_months_res.mappings().all()}
+        total_workdays = _count_workdays_for_months(df, dt, emp_data_months)
 
     attendance_pct = round(worked_days / total_workdays * 100, 1) if total_workdays > 0 else 0.0
 
@@ -202,6 +234,9 @@ async def get_calendar(
     result = await db.execute(query, {"eid": str(eid), "dt_from": dt_from, "dt_to": dt_to})
     rows = {r["day"]: r["first_entry"].time() for r in result.mappings().all()}
 
+    # Single-month view: if there is any data this month, all workdays are fair game
+    has_data_this_month = len(rows) > 0
+
     await warm_cache_for_month(y, m)
 
     statuses: list[DailyStatus] = []
@@ -221,7 +256,7 @@ async def get_calendar(
                 statuses.append(DailyStatus(date=cur, status="normal", first_entry=arrival))
             else:
                 statuses.append(DailyStatus(date=cur, status="late", first_entry=arrival))
-        elif cur <= today:
+        elif cur <= today and has_data_this_month:
             statuses.append(DailyStatus(date=cur, status="absent"))
         cur += timedelta(days=1)
 
@@ -263,6 +298,22 @@ async def get_calendar_range(
     result = await db.execute(query, {"eid": str(eid), "dt_from": dt_from, "dt_to": dt_to})
     rows = {r["day"]: r["first_entry"].time() for r in result.mappings().all()}
 
+    # Determine which months have data for this employee (any event type)
+    months_query = text(
+        """
+        SELECT DISTINCT
+            EXTRACT(YEAR FROM event_time AT TIME ZONE 'UTC')::int  AS y,
+            EXTRACT(MONTH FROM event_time AT TIME ZONE 'UTC')::int AS m
+        FROM attendance_logs
+        WHERE employee_id = :eid
+          AND event_time BETWEEN :dt_from AND :dt_to
+        """
+    )
+    months_result = await db.execute(months_query, {"eid": str(eid), "dt_from": dt_from, "dt_to": dt_to})
+    months_with_data: set[tuple[int, int]] = {
+        (r["y"], r["m"]) for r in months_result.mappings().all()
+    }
+
     # Warm holiday cache for all months in range
     cur_month = date(df.year, df.month, 1)
     end_month = date(dt.year, dt.month, 1)
@@ -278,18 +329,22 @@ async def get_calendar_range(
     cur = df
 
     while cur <= min(dt, today):
-        if cur.weekday() >= 5:
-            statuses.append(DailyStatus(date=cur, status="weekend"))
-        elif is_holiday(cur) and cur not in rows:
-            statuses.append(DailyStatus(date=cur, status="weekend"))
-        elif cur in rows:
-            arrival = rows[cur]
-            if arrival <= late_threshold:
-                statuses.append(DailyStatus(date=cur, status="normal", first_entry=arrival))
+        month_has_data = (cur.year, cur.month) in months_with_data
+        if month_has_data:
+            if cur.weekday() >= 5:
+                statuses.append(DailyStatus(date=cur, status="weekend"))
+            elif is_holiday(cur) and cur not in rows:
+                statuses.append(DailyStatus(date=cur, status="weekend"))
+            elif cur in rows:
+                arrival = rows[cur]
+                if arrival <= late_threshold:
+                    statuses.append(DailyStatus(date=cur, status="normal", first_entry=arrival))
+                else:
+                    statuses.append(DailyStatus(date=cur, status="late", first_entry=arrival))
             else:
-                statuses.append(DailyStatus(date=cur, status="late", first_entry=arrival))
-        else:
-            statuses.append(DailyStatus(date=cur, status="absent"))
+                # Workday in a month with data but no entry → absent (red)
+                statuses.append(DailyStatus(date=cur, status="absent"))
+        # Months without any data → skip entirely
         cur += timedelta(days=1)
 
     return statuses
@@ -314,6 +369,7 @@ async def get_trend(
     )
 
     if eid is None:
+        # Exclude "Временный пропуск" employees from trend
         query = text(
             """
             WITH daily AS (
@@ -321,23 +377,27 @@ async def get_trend(
                     DATE_TRUNC('month', event_time AT TIME ZONE 'UTC')              AS month_trunc,
                     TO_CHAR(DATE_TRUNC('month', event_time AT TIME ZONE 'UTC'), 'YYYY-MM') AS month,
                     DATE(event_time AT TIME ZONE 'UTC')                             AS day,
-                    employee_id
-                FROM attendance_logs
+                    a.employee_id
+                FROM attendance_logs a
+                JOIN users u ON a.employee_id = u.id
                 WHERE event_time >= :dt_from
+                  AND u.full_name NOT ILIKE '%%Временный пропуск%%'
                 GROUP BY
                     DATE_TRUNC('month', event_time AT TIME ZONE 'UTC'),
                     DATE(event_time AT TIME ZONE 'UTC'),
-                    employee_id
+                    a.employee_id
             ),
             monthly AS (
                 SELECT
                     month,
                     COUNT(*)                        AS worked_days,
-                    COUNT(DISTINCT employee_id)     AS active_employees
+                    COUNT(DISTINCT employee_id)     AS active_employees,
+                    MIN(day)                        AS first_day,
+                    MAX(day)                        AS last_day
                 FROM daily
                 GROUP BY month
             )
-            SELECT month, worked_days, active_employees
+            SELECT month, worked_days, active_employees, first_day, last_day
             FROM monthly
             ORDER BY month
             """
@@ -351,7 +411,12 @@ async def get_trend(
             y_val = int(ym[:4])
             m_val = int(ym[5:7])
             active = int(row["active_employees"] or 1)
-            workdays = _count_workdays(date(y_val, m_val, 1), _last_day(y_val, m_val))
+            # Use actual data range within the month
+            month_start = date(y_val, m_val, 1)
+            month_end = _last_day(y_val, m_val)
+            effective_start = max(month_start, row["first_day"]) if row["first_day"] else month_start
+            effective_end = min(month_end, row["last_day"]) if row["last_day"] else month_end
+            workdays = _count_workdays(effective_start, effective_end)
             total_possible = workdays * active
             pct = round(int(row["worked_days"]) / total_possible * 100, 1) if total_possible > 0 else 0.0
             trend.append(TrendPoint(month=ym, attendance_pct=pct))
@@ -361,13 +426,15 @@ async def get_trend(
             WITH monthly AS (
                 SELECT
                     TO_CHAR(DATE_TRUNC('month', event_time AT TIME ZONE 'UTC'), 'YYYY-MM') AS month,
-                    COUNT(DISTINCT DATE(event_time AT TIME ZONE 'UTC'))                    AS worked_days
+                    COUNT(DISTINCT DATE(event_time AT TIME ZONE 'UTC'))                    AS worked_days,
+                    MIN(DATE(event_time AT TIME ZONE 'UTC'))                               AS first_day,
+                    MAX(DATE(event_time AT TIME ZONE 'UTC'))                               AS last_day
                 FROM attendance_logs
                 WHERE employee_id = :eid
                   AND event_time >= :dt_from
                 GROUP BY DATE_TRUNC('month', event_time AT TIME ZONE 'UTC')
             )
-            SELECT month, worked_days
+            SELECT month, worked_days, first_day, last_day
             FROM monthly
             ORDER BY month
             """
@@ -380,7 +447,12 @@ async def get_trend(
             ym = row["month"]
             y_val = int(ym[:4])
             m_val = int(ym[5:7])
-            workdays = _count_workdays(date(y_val, m_val, 1), _last_day(y_val, m_val))
+            # Use actual data range within the month
+            month_start = date(y_val, m_val, 1)
+            month_end = _last_day(y_val, m_val)
+            effective_start = max(month_start, row["first_day"]) if row["first_day"] else month_start
+            effective_end = min(month_end, row["last_day"]) if row["last_day"] else month_end
+            workdays = _count_workdays(effective_start, effective_end)
             pct = round(int(row["worked_days"]) / workdays * 100, 1) if workdays > 0 else 0.0
             trend.append(TrendPoint(month=ym, attendance_pct=pct))
 
@@ -407,14 +479,17 @@ async def get_heatmap(
     dt_to = datetime(dt.year, dt.month, dt.day, 23, 59, 59, tzinfo=timezone.utc)
 
     if eid is None:
+        # Exclude "Временный пропуск" employees from heatmap
         query = text(
             """
             SELECT
                 EXTRACT(DOW  FROM event_time AT TIME ZONE 'UTC')::int AS day_of_week,
                 EXTRACT(HOUR FROM event_time AT TIME ZONE 'UTC')::int AS hour,
                 COUNT(*)::int                                          AS intensity
-            FROM attendance_logs
+            FROM attendance_logs a
+            JOIN users u ON a.employee_id = u.id
             WHERE event_time BETWEEN :dt_from AND :dt_to
+              AND u.full_name NOT ILIKE '%%Временный пропуск%%'
             GROUP BY
                 EXTRACT(DOW  FROM event_time AT TIME ZONE 'UTC'),
                 EXTRACT(HOUR FROM event_time AT TIME ZONE 'UTC')
@@ -469,6 +544,7 @@ async def get_top_late(
     dt_from = datetime(df.year, df.month, df.day, tzinfo=timezone.utc)
     dt_to = datetime(dt.year, dt.month, dt.day, 23, 59, 59, tzinfo=timezone.utc)
 
+    # Exclude "Временный пропуск" employees from top-late
     query = text(
         """
         WITH daily_first AS (
@@ -485,6 +561,7 @@ async def get_top_late(
         FROM daily_first d
         JOIN users u ON d.employee_id = u.id
         WHERE EXTRACT(EPOCH FROM d.first_entry::time) > 32400
+          AND u.full_name NOT ILIKE '%%Временный пропуск%%'
         GROUP BY u.id, u.full_name
         ORDER BY late_count DESC
         LIMIT :limit
@@ -523,11 +600,14 @@ async def get_checkpoints(
     dt_to = datetime(dt.year, dt.month, dt.day, 23, 59, 59, tzinfo=timezone.utc)
 
     if eid is None:
+        # Exclude "Временный пропуск" employees from checkpoint stats
         query = text(
             """
             SELECT checkpoint, COUNT(*)::int AS count
-            FROM attendance_logs
+            FROM attendance_logs a
+            JOIN users u ON a.employee_id = u.id
             WHERE event_time BETWEEN :dt_from AND :dt_to
+              AND u.full_name NOT ILIKE '%%Временный пропуск%%'
             GROUP BY checkpoint
             ORDER BY count DESC
             """
@@ -633,6 +713,23 @@ def _count_workdays(start: date, end: date) -> int:
     cur = start
     while cur <= end:
         if cur.weekday() < 5 and not is_holiday(cur):
+            count += 1
+        cur += timedelta(days=1)
+    return count
+
+
+def _count_workdays_for_months(
+    start: date, end: date, months_with_data: set[tuple[int, int]]
+) -> int:
+    """Рабочие дни только в месяцах, где есть фактические данные."""
+    count = 0
+    cur = start
+    while cur <= end:
+        if (
+            (cur.year, cur.month) in months_with_data
+            and cur.weekday() < 5
+            and not is_holiday(cur)
+        ):
             count += 1
         cur += timedelta(days=1)
     return count

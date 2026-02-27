@@ -13,12 +13,21 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
+  ActionIcon,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconAlertCircle, IconKey } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconKey,
+  IconSun,
+  IconMoon,
+} from '@tabler/icons-react';
+import { useMantineColorScheme, useComputedColorScheme } from '@mantine/core';
 import { authApi } from '../api/auth';
 import { useAuth } from '../providers/AuthProvider';
+
+import BlackFull from '../assets/BlackFull.png';
+import whiteFull from '../assets/whiteFull.png';
 
 type Step = 'loading' | 'set-credentials' | 'setup2fa' | 'verify2fa';
 
@@ -32,6 +41,9 @@ export function FirstLoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setupTOTP, verifyTOTP } = useAuth();
+  const { toggleColorScheme } = useMantineColorScheme();
+  const colorScheme = useComputedColorScheme('light');
+  const isDark = colorScheme === 'dark';
 
   const inviteToken = searchParams.get('token') ?? '';
 
@@ -151,21 +163,38 @@ export function FirstLoginPage() {
 
   return (
     <Center h="100vh" style={{ background: 'var(--bg-page)' }}>
+      {/* Theme toggle */}
+      <ActionIcon
+        variant="subtle"
+        color="gray"
+        onClick={toggleColorScheme}
+        title="Переключить тему"
+        size="lg"
+        style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}
+      >
+        {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
+      </ActionIcon>
+
       <Box w={420} pos="relative">
         <LoadingOverlay visible={loading || step === 'loading'} />
 
         <Paper
-          p="xl"
+          p={32}
           radius="lg"
           withBorder
-          shadow="md"
-          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}
+          style={{
+            borderColor: 'var(--border-subtle)',
+            backgroundColor: 'var(--bg-card)',
+            boxShadow: 'var(--shadow-lg)',
+          }}
         >
           <Stack gap="lg">
             <Stack gap={4} align="center">
-              <Title order={2} fw={700} style={{ color: 'var(--primary-500)' }}>
-                AttendTrack
-              </Title>
+              <img
+                src={isDark ? BlackFull : whiteFull}
+                alt="ClockIn"
+                style={{ height: 40, width: 'auto', objectFit: 'contain', marginBottom: 8 }}
+              />
               {userName && (
                 <Text fw={500} size="md">
                   {userName}
