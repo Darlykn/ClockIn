@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_HOURS: int = 24
 
     LATE_THRESHOLD_TIME: str = "09:00"
     OVERTIME_THRESHOLD_TIME: str = "18:00"

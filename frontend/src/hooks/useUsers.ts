@@ -10,12 +10,11 @@ export function useUsers(search?: string) {
   });
 }
 
-export function useEmployees(enabled: boolean = true) {
+export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],
     queryFn: () => usersApi.listEmployees(),
     staleTime: 10 * 60 * 1000,
-    enabled,
   });
 }
 

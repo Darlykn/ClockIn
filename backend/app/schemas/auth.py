@@ -29,17 +29,10 @@ class ResetPasswordRequest(BaseModel):
 
 class FirstLoginRequest(BaseModel):
     invite_token: str
-    email: str | None = None
+    email: str
     password: str = Field(..., min_length=6)
     password_confirm: str
 
 
 class InviteTokenResponse(BaseModel):
     invite_token: str
-
-
-class InviteValidationResponse(BaseModel):
-    valid: bool
-    has_email: bool = False
-    email: str | None = None
-    full_name: str | None = None

@@ -1,9 +1,3 @@
-@font-face {
-  font-family: 'Inter';
-  font-display: optional;
-  src: local('Inter');
-}
-
 *, *::before, *::after {
   box-sizing: border-box;
 }

@@ -66,11 +66,11 @@ interface TooltipContent {
 
 export function YearCalendar() {
   const { user } = useAuth();
+  const { data: employees } = useEmployees();
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';
-  const { data: employees } = useEmployees(isAdmin);
 
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(
-    isAdmin ? null : (user?.id ?? null)
+    isAdmin ? null : String(user?.employee_id ?? '')
   );
   const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null);
@@ -286,8 +286,8 @@ export function YearCalendar() {
                         );
                       }
 
-                      // Future days or past days without data — gray placeholder
-                      if (isFuture || !dayData) {
+                      // Future days — white fill + faint dashed border (no opacity on the whole cell)
+                      if (isFuture) {
                         return (
                           <Box
                             key={di}
@@ -295,16 +295,19 @@ export function YearCalendar() {
                               width: CELL_SIZE,
                               height: CELL_SIZE,
                               borderRadius: 2,
-                              backgroundColor: '#e9ecef',
-                              opacity: 0.5,
+                              backgroundColor: 'var(--mantine-color-white)',
+                              border: '1px dashed rgba(0, 0, 0, 0.12)',
+                              boxSizing: 'border-box',
                             }}
                           />
                         );
                       }
 
-                      // Days with data
-                      const color = STATUS_COLORS[dayData.status];
-                      const opacity = 1;
+                      // Past days
+                      const color = dayData
+                        ? STATUS_COLORS[dayData.status]
+                        : 'var(--mantine-color-default-border)';
+                      const opacity = dayData ? 1 : 0.3;
 
                       return (
                         <Box

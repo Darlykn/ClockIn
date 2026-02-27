@@ -30,7 +30,6 @@ import { TrendChart } from '../components/Charts/TrendChart';
 import { HeatmapChart } from '../components/Charts/HeatmapChart';
 import { TopLateChart } from '../components/Charts/TopLateChart';
 import { CheckpointChart } from '../components/Charts/CheckpointChart';
-import { WorkHoursChart } from '../components/Charts/WorkHoursChart';
 import { YearCalendar } from '../components/Calendar/YearCalendar';
 import type { StatsParams } from '../api/stats';
 
@@ -75,13 +74,13 @@ function StatsCard({ title, value, icon: Icon, color, loading }: StatsCardProps)
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const { data: employees } = useEmployees();
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';
-  const { data: employees } = useEmployees(isAdmin);
 
   const STORAGE_KEY = 'AttendTrack-dashboard-period';
 
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(
-    isAdmin ? null : (user?.id ?? null)
+    isAdmin ? null : String(user?.employee_id ?? '')
   );
   const [dateFrom, setDateFrom] = useState<string>(() => {
     try {
@@ -255,15 +254,9 @@ export function DashboardPage() {
       <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="lg">
         <TrendChart params={params} />
         <HeatmapChart params={params} />
-        {isAdmin ? (
-          <Box style={{ display: 'flex', flexDirection: 'column' }}>
-            <TopLateChart params={params} />
-          </Box>
-        ) : (
-          <Box style={{ display: 'flex', flexDirection: 'column' }}>
-            <WorkHoursChart params={params} />
-          </Box>
-        )}
+        <Box style={{ display: 'flex', flexDirection: 'column' }}>
+          <TopLateChart params={params} />
+        </Box>
         <Box style={{ display: 'flex', flexDirection: 'column' }}>
           <CheckpointChart params={params} />
         </Box>
