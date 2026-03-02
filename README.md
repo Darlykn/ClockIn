@@ -65,7 +65,7 @@ docker compose up --build
 docker exec -it attendtrack-backend-1 python -m app.db.seed
 ```
 
-Скрипт создаст администратора (`admin`) и сотрудников. Пароль выводится в консоль.
+Скрипт создаст администратора (логин: admin, пароль: admin123)
 
 ### 5. Остановить
 
